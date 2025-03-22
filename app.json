@@ -16,6 +16,8 @@
       "fallbackToCacheTimeout": 0
     },
     "assetBundlePatterns": [
+      "assets/fonts/*",
+      "assets/images/*",
       "**/*"
     ],
     "ios": {
@@ -43,6 +45,14 @@
       "favicon": "./assets/images/favicon.png",
       "bundler": "metro"
     },
-    "newArchEnabled": true
+    "newArchEnabled": true,
+    "extra": {
+      "eas": {
+        "projectId": "9c716b01-3118-4110-be2e-2ea441b6b786"
+      }
+    },
+    "plugins": [
+      "expo-router"
+    ]
   }
 }

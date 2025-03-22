@@ -105,7 +105,15 @@ export default function Upload() {
 
       // Show success message
       Alert.alert("Success!", "Your item has been listed on the marketplace", [
-        { text: "OK", onPress: () => router.push("../app/(tabs)/Marketplace") },
+        { 
+          text: "OK", 
+          onPress: () => {
+            router.push({
+              pathname: "../app/(tabs)/Marketplace",
+              params: { refresh: true as never}, // Trigger refresh on navigation
+            });
+          }
+        },
       ]);
     } catch (error) {
       console.error("Error saving item:", error);
@@ -150,12 +158,18 @@ export default function Upload() {
     </TouchableOpacity>
   );
 
+  const handleBackClick = () => {
+    router.replace({
+      pathname: "../app/(tabs)/Marketplace", // Ensure 'Marketplace' is the correct screen name
+    });
+  };
+
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={handleBackClick} // Use handleBackClick for back navigation
           style={styles.backButton}
         >
           <Ionicons name="arrow-back" size={24} color="#333" />

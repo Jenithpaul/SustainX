@@ -1,24 +1,42 @@
-// filepath: c:\Users\jenit\Desktop\SustainXsussyDevs\trialll1\app\(tabs)\marketplace.tsx
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator, StatusBar, RefreshControl } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator, RefreshControl, TextInput, Alert, Switch } from "react-native";
+import { Picker } from '@react-native-picker/picker';
 import { Ionicons } from "@expo/vector-icons";
 import FeaturedCard from "../../components/FeaturedCard";
 import SearchBar from "../../components/SearchBar";
 import { useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { router } from 'expo-router';
-import Upload from "../../components/upload"; // Import the Upload component
-import ChatScreen from "../../components/ChatScreen"; // Import the ChatScreen component
+import Upload from "../../components/upload";
+import ChatScreen from "../../components/ChatScreen";
+import ProfilePage from '../../components/ProfilePage';
+import ChatList from "../../components/ChatList";
+import ItemDetails from "../../components/ItemDetails";
+import { useLocalSearchParams } from "expo-router"; // Import useLocalSearchParams
+import * as ImagePicker from "expo-image-picker"; // Add import for ImagePicker
 
 export default function Marketplace() {
+  const { method } = useLocalSearchParams<{ method?: string }>(); // Read the method parameter
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTag, setSelectedTag] = useState("All");
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showWishlist, setShowWishlist] = useState(false);
-  const [showUpload, setShowUpload] = useState(false); // State to toggle upload view
-  const [showChat, setShowChat] = useState(false); // State to toggle chat view
-  
+  const [showChatList, setShowChatList] = useState(false);
+  const [showUpload, setShowUpload] = useState(false);
+  const [showChat, setShowChat] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+  const [chatDetails, setChatDetails] = useState<{ itemId: string; itemTitle: string; recipientId: string; recipientName: string } | null>(null);
+  const [selectedItem, setSelectedItem] = useState<Item | null>(null);
+  const [uploadMethod, setUploadMethod] = useState<"sell" | "swap" | "donate">("sell"); // Default to "sell"
+
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("Electronics");
+  const [price, setPrice] = useState("");
+  const [negotiable, setNegotiable] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [imageUrl, setImageUrl] = useState("https://via.placeholder.com/150");
+
   interface Item {
     image: string;
     price: string;
@@ -27,6 +45,7 @@ export default function Marketplace() {
     tag: string;
     id?: string;
     isLiked?: boolean;
+    username: string;
   }
 
   const [items, setItems] = useState<Item[]>([]);
@@ -40,6 +59,7 @@ export default function Marketplace() {
       description: "Like new condition, 1 year warranty",
       tag: "Electronics",
       isLiked: false,
+      username: "John Doe",
     },
     {
       id: "2",
@@ -49,15 +69,17 @@ export default function Marketplace() {
       description: "Perfect condition, 2nd year",
       tag: "Books",
       isLiked: false,
+      username: "Jane Smith",
     },
     {
       id: "3",
-      image: "https://via.placeholder.com/150",
+      image: "https://tse2.mm.bing.net/th?id=OIP.uLgbHigFVo5rfNajwAhRXwHaE5&pid=Api&P=0&h=180",
       price: "₹99",
       title: "Mechanical Keyboard",
       description: "Brand new, RGB lighting",
       tag: "Electronics",
       isLiked: false,
+      username: "Alice Johnson",
     },
     {
       id: "4",
@@ -67,55 +89,55 @@ export default function Marketplace() {
       description: "Scientific calculator, lightly used",
       tag: "Electronics",
       isLiked: false,
+      username: "Bob Brown",
     },
   ];
 
-  // Get all unique categories
   const getCategories = () => {
     const tags = new Set(items.map(item => item.tag));
     return ["All", ...Array.from(tags)];
   };
 
-  // Load data from AsyncStorage
   const loadMarketplaceData = async () => {
     setIsLoading(true);
     try {
       const storedItems = await AsyncStorage.getItem('marketplaceItems');
-      
       if (storedItems) {
         const parsedItems = JSON.parse(storedItems);
         if (parsedItems.length > 0) {
-          // Ensure all items have IDs
           const itemsWithIds = parsedItems.map((item: Item, index: number) => ({
             ...item,
             id: item.id || `item-${index}`
           }));
           setItems(itemsWithIds);
         } else {
-          // If nothing in storage, store default items
           await AsyncStorage.setItem('marketplaceItems', JSON.stringify(defaultItems));
           setItems(defaultItems);
         }
       } else {
-        // If no stored items yet, initialize with default
         await AsyncStorage.setItem('marketplaceItems', JSON.stringify(defaultItems));
         setItems(defaultItems);
       }
     } catch (error) {
       console.error("Error loading marketplace items:", error);
-      setItems(defaultItems); // Fallback to default items on error
+      setItems(defaultItems);
     } finally {
       setIsLoading(false);
       setRefreshing(false);
     }
   };
 
-  // Initial load
   useEffect(() => {
     loadMarketplaceData();
   }, []);
 
-  // Refresh on focus
+  useEffect(() => {
+    if (method === "sell" || method === "swap" || method === "donate") {
+      setUploadMethod(method); // Set the upload method based on the parameter
+      setShowUpload(true); // Automatically show the Upload section
+    }
+  }, [method]);
+
   useFocusEffect(
     React.useCallback(() => {
       loadMarketplaceData();
@@ -123,13 +145,11 @@ export default function Marketplace() {
     }, [])
   );
 
-  // Pull to refresh handler
   const onRefresh = () => {
     setRefreshing(true);
     loadMarketplaceData();
   };
 
-  // Filter items based on search, tag, and wishlist status
   const filteredItems = items.filter(item => {
     const matchesTag = selectedTag === "All" || item.tag === selectedTag;
     const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -138,24 +158,10 @@ export default function Marketplace() {
     return matchesTag && matchesSearch && matchesWishlist;
   });
 
-  // Navigate to upload screen
-  const navigateToUpload = () => {
-    router.push('/upload'); // Ensure the path matches the registered screen name
-  };
-  
-  // Toggle between marketplace and wishlist
   const toggleWishlist = () => {
     setShowWishlist(!showWishlist);
   };
-  
-  // Navigate to chats
-  const navigateToChats = () => {
-    // This would navigate to your chat screen
-    // router.push('/chats');
-    console.log("Navigate to chats");
-  };
 
-  // Toggle like status of an item
   const toggleLike = async (itemId: string) => {
     const updatedItems = items.map(item => 
       item.id === itemId ? { ...item, isLiked: !item.isLiked } : item
@@ -164,14 +170,151 @@ export default function Marketplace() {
     await AsyncStorage.setItem('marketplaceItems', JSON.stringify(updatedItems));
   };
 
-  // Toggle between marketplace and upload view
   const toggleUploadView = () => {
     setShowUpload(!showUpload);
   };
 
-  // Toggle between marketplace and chat view
-  const toggleChatView = () => {
-    setShowChat(!showChat);
+  const toggleChatListView = () => {
+    setShowChatList(!showChatList);
+  };
+
+  const openChatScreen = (chatDetails: { itemId: string; itemTitle: string; recipientId: string; recipientName: string }) => {
+    setChatDetails(chatDetails);
+    setShowChat(true);
+  };
+
+  const toggleProfileView = () => {
+    setShowProfile(!showProfile);
+  };
+
+  const openItemDetails = (item: Item) => {
+    setSelectedItem(item);
+  };
+
+  const startChat = (item: Item) => {
+    openChatScreen({
+      itemId: item.id!,
+      itemTitle: item.title,
+      recipientId: item.id!,
+      recipientName: item.username,
+    });
+  };
+
+  const closeItemDetails = () => {
+    setSelectedItem(null);
+  };
+
+  const renderMethodButton = ({
+    method,
+    label,
+    color,
+  }: {
+    method: "sell" | "swap" | "donate";
+    label: string;
+    color: string;
+  }) => (
+    <TouchableOpacity
+      style={[
+        styles.methodButton,
+        { backgroundColor: uploadMethod === method ? color : "#f0f0f0" },
+      ]}
+      onPress={() => setUploadMethod(method)}
+    >
+      <Text
+        style={[
+          styles.methodButtonText,
+          { color: uploadMethod === method ? "white" : "#666" },
+        ]}
+      >
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+
+  const validateForm = () => {
+    if (!title.trim()) {
+      Alert.alert("Missing Information", "Please enter a title for your item");
+      return false;
+    }
+
+    if (!description.trim()) {
+      Alert.alert(
+        "Missing Information",
+        "Please provide a description for your item"
+      );
+      return false;
+    }
+
+    if (uploadMethod === "sell" && (!price || parseFloat(price) <= 0)) {
+      Alert.alert("Invalid Price", "Please enter a valid price for your item");
+      return false;
+    }
+
+    return true;
+  };
+
+  const selectImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      if (result.assets && result.assets.length > 0) {
+        setImageUrl(result.assets[0].uri);
+      }
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!validateForm()) return;
+
+    setIsSaving(true);
+
+    try {
+      let formattedPrice = "Free";
+      if (uploadMethod === "sell") {
+        formattedPrice = `₹${price}`;
+      } else if (uploadMethod === "swap") {
+        formattedPrice = "For Swap";
+      }
+
+      const newItem = {
+        image: imageUrl,
+        price: formattedPrice,
+        title: title.trim(),
+        description: description.trim(),
+        tag: category,
+        negotiable: uploadMethod === "sell" ? negotiable : false,
+        listedDate: new Date().toISOString(),
+        type: uploadMethod,
+      };
+
+      const storedItemsStr = await AsyncStorage.getItem("marketplaceItems");
+      const storedItems = storedItemsStr ? JSON.parse(storedItemsStr) : [];
+      storedItems.unshift(newItem);
+
+      await AsyncStorage.setItem(
+        "marketplaceItems",
+        JSON.stringify(storedItems)
+      );
+
+      Alert.alert("Success!", "Your item has been listed on the marketplace", [
+        {
+          text: "OK",
+          onPress: () => {
+            setShowUpload(false); // Close the upload section
+          },
+        },
+      ]);
+    } catch (error) {
+      console.error("Error saving item:", error);
+      Alert.alert("Error", "Failed to save your item. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   if (isLoading) {
@@ -185,29 +328,157 @@ export default function Marketplace() {
 
   return (
     <View style={styles.container}>
-      <StatusBar backgroundColor="#f9f9f9" barStyle="dark-content" />
-      
       {showUpload ? (
-        <Upload />
-      ) : showChat ? (
-        <ChatScreen route={{ key: "chat", name: "params", params: { itemId: "1", itemTitle: "Sample Item", recipientId: "123", recipientName: "John Doe" } }} />
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {/* Upload Method Selection */}
+          <View style={styles.methodContainer}>
+            {renderMethodButton({
+              method: "sell",
+              label: "Sell",
+              color: "#4CAF50",
+            })}
+            {renderMethodButton({
+              method: "swap",
+              label: "Swap",
+              color: "#2196F3",
+            })}
+            {renderMethodButton({
+              method: "donate",
+              label: "Donate",
+              color: "#FF9800",
+            })}
+          </View>
+
+          {/* Images Section */}
+          <Text style={styles.sectionTitle}>Upload Images</Text>
+          <View style={styles.imageContainer}>
+            <TouchableOpacity style={styles.mainImagePlaceholder} onPress={selectImage}>
+              <Image source={{ uri: imageUrl }} style={styles.mainImagePreview} />
+              <View style={styles.imageOverlay}>
+                <Ionicons name="camera" size={32} color="#fff" />
+                <Text style={styles.imageOverlayText}>Tap to add</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+
+          {/* Details Section */}
+          <Text style={styles.sectionTitle}>Item Details</Text>
+          <View style={styles.card}>
+            <Text style={styles.inputLabel}>Title</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="What are you listing?"
+              value={title}
+              onChangeText={setTitle}
+              maxLength={50}
+            />
+
+            <Text style={styles.inputLabel}>Description</Text>
+            <TextInput
+              style={[styles.input, styles.multilineInput]}
+              placeholder="Describe your item's condition, features, etc."
+              value={description}
+              onChangeText={setDescription}
+              multiline
+              numberOfLines={4}
+              maxLength={500}
+            />
+
+            <Text style={styles.inputLabel}>Category</Text>
+            <View style={styles.pickerContainer}>
+            <Picker
+              selectedValue={category}
+              style={styles.picker}
+              onValueChange={(itemValue: string) => setCategory(itemValue)} // Explicitly type itemValue as string
+>
+                <Picker.Item label="Electronics" value="Electronics" />
+                <Picker.Item label="Books" value="Books" />
+                <Picker.Item label="Furniture" value="Furniture" />
+                <Picker.Item label="Clothes" value="Clothes" />
+                <Picker.Item label="Sports" value="Sports" />
+                <Picker.Item label="Others" value="Others" />
+              </Picker>
+            </View>
+
+            {uploadMethod === "sell" && (
+              <>
+                <Text style={styles.inputLabel}>Price (₹)</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter price"
+                  value={price}
+                  onChangeText={setPrice}
+                  keyboardType="numeric"
+                />
+
+                <View style={styles.checkboxContainer}>
+                  <Switch
+                    value={negotiable}
+                    onValueChange={setNegotiable}
+                    trackColor={{ false: "#ccc", true: "#4CAF50" }}
+                    thumbColor={negotiable ? "#ffffff" : "#f4f3f4"}
+                  />
+                  <Text style={styles.checkboxLabel}>Price is negotiable</Text>
+                </View>
+              </>
+            )}
+          </View>
+
+          {/* Submit Button */}
+          <TouchableOpacity
+            style={styles.submitButton}
+            onPress={handleUpload}
+            disabled={isSaving}
+          >
+            {isSaving ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <>
+                <Ionicons
+                  name="cloud-upload-outline"
+                  size={20}
+                  color="#fff"
+                  style={styles.submitIcon}
+                />
+                <Text style={styles.submitText}>
+                  {uploadMethod === "sell"
+                    ? "List For Sale"
+                    : uploadMethod === "swap"
+                    ? "List For Swap"
+                    : "List For Donation"}
+                </Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </ScrollView>
+      ) : showChat && chatDetails ? (
+        <ChatScreen route={{ key: "chat", name: "params", params: chatDetails }} />
+      ) : showProfile ? (
+        <ProfilePage />
+      ) : showChatList ? (
+        <ChatList onChatSelect={openChatScreen} />
+      ) : selectedItem ? (
+        <ItemDetails 
+          item={selectedItem} 
+          onStartChat={() => startChat(selectedItem)} 
+          onClose={closeItemDetails} 
+        />
       ) : (
         <>
-          {/* Header */}
           <View style={styles.header}>
             <Text style={styles.title}>
               {showWishlist ? "My Wishlist" : "SustainX Marketplace"}
             </Text>
-            <View style={styles.headerActions}></View>
-              <TouchableOpacity style={styles.iconButton} onPress={toggleChatView}>
+            <View style={styles.headerActions}>
+              <TouchableOpacity style={styles.iconButton} onPress={toggleChatListView}>
                 <Ionicons name="chatbubble-outline" size={24} color="#4CAF50" />
               </TouchableOpacity>
-              <TouchableOpacity style={styles.profileButton}>
+              <TouchableOpacity style={styles.profileButton} onPress={toggleProfileView}>
                 <Ionicons name="person-circle-outline" size={30} color="#4CAF50" />
               </TouchableOpacity>
+            </View>
           </View>
 
-          {/* Search and Filter */}
           <SearchBar
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
@@ -218,7 +489,6 @@ export default function Marketplace() {
             toggleWishlist={toggleWishlist}
           />
           
-          {/* Content */}
           {filteredItems.length > 0 ? (
             <ScrollView 
               showsVerticalScrollIndicator={false}
@@ -229,7 +499,6 @@ export default function Marketplace() {
             >
               {!showWishlist && (
                 <>
-                  {/* Featured Items Section */}
                   <View style={styles.sectionHeader}>
                     <Text style={styles.sectionTitle}>Featured Items</Text>
                     <TouchableOpacity>
@@ -237,7 +506,6 @@ export default function Marketplace() {
                     </TouchableOpacity>
                   </View>
                   
-                  {/* Featured Items Horizontal Scroll */}
                   <ScrollView 
                     horizontal 
                     showsHorizontalScrollIndicator={false}
@@ -258,6 +526,7 @@ export default function Marketplace() {
                               setItems(prevItems => prevItems.filter(i => i.id !== item.id));
                             }
                           }}
+                          onPress={() => openItemDetails(item)}
                         />
                       </View>
                     ))}
@@ -265,7 +534,6 @@ export default function Marketplace() {
                 </>
               )}
 
-              {/* All Items Grid */}
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>
                   {showWishlist ? "Saved Items" : "All Items"}
@@ -296,6 +564,7 @@ export default function Marketplace() {
                           setItems(prevItems => prevItems.filter(i => i.id !== item.id));
                         }
                       }}
+                      onPress={() => openItemDetails(item)}
                     />
                   </View>
                 ))}
@@ -325,13 +594,12 @@ export default function Marketplace() {
               </TouchableOpacity>
             </View>
           )}
-
-          {/* Floating Action Button */}
-          <TouchableOpacity style={styles.addButton} onPress={toggleUploadView}>
-            <Ionicons name="add" size={30} color="#FFFFFF" />
-          </TouchableOpacity>
         </>
       )}
+
+      <TouchableOpacity style={styles.addButton} onPress={toggleUploadView}>
+        <Ionicons name="add" size={30} color="#FFFFFF" />
+      </TouchableOpacity>
     </View>
   );
 }
@@ -351,6 +619,25 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 16,
     color: "#4CAF50",
+  },
+  methodContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    padding: 16,
+    backgroundColor: "#fff",
+    marginBottom: 8,
+  },
+  methodButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+    marginHorizontal: 4,
+  },
+  methodButtonText: {
+    fontWeight: "600",
+    fontSize: 16,
   },
   header: {
     flexDirection: "row",
@@ -377,6 +664,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   scrollContent: {
+    paddingHorizontal: 16,
     paddingBottom: 80,
   },
   sectionHeader: {
@@ -433,6 +721,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 16,
     marginTop: 8,
+    marginBottom: 16,
   },
   gridItem: {
     width: "48%",
@@ -476,17 +765,103 @@ const styles = StyleSheet.create({
   addButton: {
     position: "absolute",
     right: 24,
-    bottom: 85,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    bottom: 24,
     backgroundColor: "#4CAF50",
+  },
+  imageContainer: {
+    padding: 16,
+    backgroundColor: "#fff",
+  },
+  mainImagePlaceholder: {
+    width: "100%",
+    height: 200,
+    backgroundColor: "#f0f0f0",
+    borderRadius: 8,
+    marginBottom: 8,
+    overflow: "hidden",
+    position: "relative",
+  },
+  mainImagePreview: {
+    width: "100%",
+    height: "100%",
+  },
+  imageOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.3)",
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+  },
+  imageOverlayText: {
+    color: "#fff",
+    marginTop: 8,
+    fontWeight: "500",
+  },
+  card: {
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    padding: 16,
+    marginHorizontal: 16,
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: "500",
+    marginBottom: 8,
+    color: "#333",
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    backgroundColor: "#fafafa",
+    marginBottom: 16,
+  },
+  multilineInput: {
+    height: 120,
+    textAlignVertical: "top",
+  },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    borderRadius: 8,
+    marginBottom: 16,
+    backgroundColor: "#fafafa",
+  },
+  picker: {
+    height: 50,
+  },
+  checkboxContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  checkboxLabel: {
+    marginLeft: 8,
+    fontSize: 16,
+    color: "#333",
+  },
+  submitButton: {
+    backgroundColor: "#4CAF50",
+    borderRadius: 8,
+    padding: 16,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginHorizontal: 16,
+    marginBottom: 32,
+  },
+  submitIcon: {
+    marginRight: 8,
+  },
+  submitText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold",
   },
 });

@@ -3,12 +3,14 @@ import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Keyboard
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RouteProp } from '@react-navigation/native';
+
 interface Message {
   id: string;
   text: string;
   sender: 'user' | 'other';
   timestamp: number;
 }
+
 type ChatScreenRouteProp = RouteProp<{ params: { itemId: string; itemTitle: string; recipientId: string; recipientName: string } }, 'params'>;
 
 export default function ChatScreen({ route }: { route: ChatScreenRouteProp }) {
