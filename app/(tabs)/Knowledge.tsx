@@ -2,14 +2,16 @@ import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator, RefreshControl } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter } from 'expo-router'; // Changed from 'next/router' to 'expo-router'
+import styles from "../../components/ui/KnowledgeStyle";
 
 export default function KnowledgeCentre() {
   const navigation = useNavigation();
-  const [activeTab, setActiveTab] = useState('home');
+  const router = useRouter(); // Add this line
+  const [activeTab, setActiveTab] = useState('Home');
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [feedbackMessage, setFeedbackMessage] = useState('');
+  const [feedbackMessage, setFeedbackMessage] = useState(''); 
 
   const showFeedback = (message: string) => {
     setFeedbackMessage(message);
@@ -49,6 +51,13 @@ export default function KnowledgeCentre() {
     if (tab !== 'home') {
       (navigation as any).navigate(tab.charAt(0).toUpperCase() + tab.slice(1));
     }
+  };
+
+  const navigateToProfile = () => {
+    router.push({
+      pathname: "/profile",
+      params: { previousScreen: "knowledge" } // Keep 'params' for Expo Router
+    });
   };
 
   const loadData = async () => {
@@ -124,29 +133,8 @@ export default function KnowledgeCentre() {
     }
   ];
 
-  if (isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#10B981" />
-        <Text style={styles.loadingText}>Loading knowledge centre...</Text>
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={handleBackClick}>
-          <Feather name="chevron-left" size={24} color="#374151" />
-        </TouchableOpacity>
-        <Text style={styles.title}>Knowledge Centre</Text>
-        <TouchableOpacity onPress={handleSearchClick}>
-          <Feather name="search" size={24} color="#374151" />
-        </TouchableOpacity>
-      </View>
-
-      {/* Content */}
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
@@ -230,177 +218,3 @@ export default function KnowledgeCentre() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F9FAFB",
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#F9FAFB",
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 16,
-    color: "#10B981",
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: "white",
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#111827",
-  },
-  scrollContent: {
-    paddingBottom: 80,
-  },
-  featuredContainer: {
-    marginHorizontal: 16,
-    marginTop: 16,
-    backgroundColor: "#ECFDF5",
-    borderRadius: 8,
-    padding: 16,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#047857",
-  },
-  viewAllText: {
-    fontSize: 14,
-    color: "#10B981",
-  },
-  featuredCard: {
-    backgroundColor: "white",
-    borderRadius: 8,
-    padding: 16,
-  },
-  courseTag: {
-    fontSize: 12,
-    color: "#10B981",
-    marginBottom: 4,
-  },
-  courseTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#111827",
-    marginBottom: 4,
-  },
-  courseDescription: {
-    fontSize: 14,
-    color: "#6B7280",
-    marginBottom: 12,
-  },
-  startLearningButton: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  startLearningText: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#10B981",
-    marginRight: 4,
-  },
-  categoriesContainer: {
-    paddingHorizontal: 16,
-    marginTop: 24,
-  },
-  categoriesGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-  },
-  categoryCard: {
-    width: "48%",
-    backgroundColor: "white",
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  categoryIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  categoryTitle: {
-    fontSize: 15,
-    fontWeight: "500",
-    color: "#111827",
-    marginBottom: 4,
-  },
-  categoryCount: {
-    fontSize: 12,
-    color: "#6B7280",
-  },
-  magazinesContainer: {
-    paddingHorizontal: 16,
-    marginTop: 8,
-    marginBottom: 80,
-  },
-  magazineItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "white",
-    borderRadius: 8,
-    padding: 8,
-    marginBottom: 12,
-  },
-  magazineIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 8,
-    marginRight: 12,
-  },
-  magazineInfo: {
-    flex: 1,
-  },
-  magazineTitle: {
-    fontSize: 15,
-    fontWeight: "500",
-    color: "#111827",
-    marginBottom: 4,
-  },
-  magazineDate: {
-    fontSize: 12,
-    color: "#6B7280",
-  },
-  toast: {
-    position: "absolute",
-    top: 40,
-    left: 0,
-    right: 0,
-    backgroundColor: "rgba(0,0,0,0.7)",
-    margin: 40,
-    padding: 8,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  toastText: {
-    color: "white",
-    fontSize: 14,
-  },
-});

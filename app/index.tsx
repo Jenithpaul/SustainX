@@ -1,6 +1,7 @@
 import { Redirect } from 'expo-router';
+import React from 'react';
 
 export default function Index() {
-  // Redirect to the tabs/Home screen
+  // Initial app launch redirects to Home tab
   return <Redirect href="/(tabs)/Home" />;
 }

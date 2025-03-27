@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,7 @@ import {
   Platform,
   TextInput,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useRouter } from "expo-router";
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -30,8 +30,12 @@ interface UserProfile {
   imageUrl: string;
 }
 
-const ProfilePage: React.FC = () => {
-  const navigation = useNavigation();
+interface ProfilePageProps {
+  previousScreen?: string;
+}
+
+const ProfilePage: React.FC<ProfilePageProps> = ({ previousScreen }) => {
+  const router = useRouter();
   
   // State for user profile data
   const [profile, setProfile] = useState<UserProfile>({
@@ -90,19 +94,39 @@ const ProfilePage: React.FC = () => {
     }
   ];
 
-  // Handle navigation back to marketplace
-  const handleBackClick = () => {
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'Marketplace' as never }], // Ensure 'Marketplace' is the correct screen name
-    });
+  // Navigate back to previous screen
+  const handleBackClick = async () => {
+    try {
+      // Try to get the stored previous tab
+      const storedPreviousTab = await AsyncStorage.getItem('previousTab');
+      
+      if (previousScreen) {
+        // Make sure previousScreen is a valid tab
+        const validTab = ['Home', 'Marketplace', 'Knowledge'].includes(previousScreen) 
+          ? previousScreen 
+          : 'Home';
+        router.replace(`/(tabs)/${validTab}`);
+      } else if (storedPreviousTab) {
+        // Make sure storedPreviousTab is a valid tab
+        const validTab = ['Home', 'Marketplace', 'Knowledge'].includes(storedPreviousTab) 
+          ? storedPreviousTab 
+          : 'Home';
+        router.replace(`/(tabs)/${validTab}`);
+      } else {
+        // Always navigate to a safe default route instead of using router.back()
+        router.replace("/(tabs)/Home");
+      }
+    } catch (error) {
+      console.error("Error navigating back:", error);
+      // Fallback to home if there's an error
+      router.replace("/(tabs)/Home");
+    }
   };
 
-  // Handle profile option click
+  // Navigate to the selected option page
   const handleOptionClick = (optionId: string) => {
     console.log(`${optionId} option clicked`);
-    // @ts-ignore
-    navigation.navigate(optionId);
+    router.push(`/${optionId}`);
   };
 
   // Handle logout functionality
@@ -122,10 +146,7 @@ const ProfilePage: React.FC = () => {
               // Clear authentication state
               await AsyncStorage.removeItem('authToken');
               // Navigate to login screen
-              navigation.reset({
-                index: 0,
-                routes: [{ name: '/(auth)/Login' as never }],
-              });
+              router.replace('/(auth)/Login');
             } catch (error) {
               console.error("Error during logout: ", error);
               Alert.alert("Error", "An error occurred during logout. Please try again.");
@@ -138,7 +159,6 @@ const ProfilePage: React.FC = () => {
 
   // Handle profile image upload
   const handleImageChange = async () => {
-    // Request permissions first
     if (Platform.OS !== 'web') {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
@@ -158,7 +178,13 @@ const ProfilePage: React.FC = () => {
       const selectedAsset = result.assets[0];
       setProfile({ ...profile, imageUrl: selectedAsset.uri });
       
-      // Display success notification
+      // Save profile image to AsyncStorage so it can be used in the header
+      try {
+        await AsyncStorage.setItem('userProfileImage', selectedAsset.uri);
+      } catch (error) {
+        console.error("Error saving profile image to storage:", error);
+      }
+      
       Alert.alert("Success", "Profile picture updated successfully!");
     }
   };

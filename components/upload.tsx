@@ -14,43 +14,55 @@ import {
 import { Picker } from "@react-native-picker/picker";
 import { Switch } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import FeaturedCard from "./FeaturedCard";
 import * as ImagePicker from "expo-image-picker";
-export default function Upload() {
+
+interface UploadProps {
+  onClose: () => void;
+}
+
+/**
+ * Upload Component
+ * - Allows users to upload a new item with image, title, description, etc.
+ * - Uses a styling theme inspired by the Knowledge page.
+ * - Calls the onClose callback when the user taps the back arrow or after a successful listing.
+ */
+export default function Upload({ onClose }: UploadProps) {
   const router = useRouter();
+
+  // Component state
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("Electronics");
   const [price, setPrice] = useState("");
   const [negotiable, setNegotiable] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-
-  // Image placeholder states
   const [imageUrl, setImageUrl] = useState("https://via.placeholder.com/150");
-  const [uploadMethod, setUploadMethod] = useState("sell"); // sell, swap, donate
+  const [uploadMethod, setUploadMethod] = useState<"sell" | "swap" | "donate">("sell");
 
-  const validateForm = () => {
+  /**
+   * Validates the form before upload.
+   */
+  const validateForm = (): boolean => {
     if (!title.trim()) {
       Alert.alert("Missing Information", "Please enter a title for your item");
       return false;
     }
-
     if (!description.trim()) {
-      Alert.alert(
-        "Missing Information",
-        "Please provide a description for your item"
-      );
+      Alert.alert("Missing Information", "Please provide a description for your item");
       return false;
     }
-
     if (uploadMethod === "sell" && (!price || parseFloat(price) <= 0)) {
       Alert.alert("Invalid Price", "Please enter a valid price for your item");
       return false;
     }
-
     return true;
   };
+
+  /**
+   * Launches the image picker and updates the image URL state.
+   */
   const selectImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -58,18 +70,18 @@ export default function Upload() {
       aspect: [4, 3],
       quality: 1,
     });
-
-    if (!result.canceled) {
-      if (result.assets && result.assets.length > 0) {
-        setImageUrl(result.assets[0].uri);
-      }
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      setImageUrl(result.assets[0].uri);
     }
   };
+
+  /**
+   * Handles the upload logic by validating, formatting data,
+   * saving to AsyncStorage, and closing the upload view on success.
+   */
   const handleUpload = async () => {
     if (!validateForm()) return;
-
     setIsSaving(true);
-
     try {
       // Format price based on upload method
       let formattedPrice = "Free";
@@ -78,7 +90,6 @@ export default function Upload() {
       } else if (uploadMethod === "swap") {
         formattedPrice = "For Swap";
       }
-
       const newItem = {
         image: imageUrl,
         price: formattedPrice,
@@ -90,30 +101,15 @@ export default function Upload() {
         type: uploadMethod,
       };
 
-      // Get existing items
+      // Retrieve and update existing items
       const storedItemsStr = await AsyncStorage.getItem("marketplaceItems");
       const storedItems = storedItemsStr ? JSON.parse(storedItemsStr) : [];
-
-      // Add new item at the beginning (for newest first)
       storedItems.unshift(newItem);
+      await AsyncStorage.setItem("marketplaceItems", JSON.stringify(storedItems));
 
-      // Save back to AsyncStorage
-      await AsyncStorage.setItem(
-        "marketplaceItems",
-        JSON.stringify(storedItems)
-      );
-
-      // Show success message
+      // Show success message and close upload view
       Alert.alert("Success!", "Your item has been listed on the marketplace", [
-        { 
-          text: "OK", 
-          onPress: () => {
-            router.push({
-              pathname: "../app/(tabs)/Marketplace",
-              params: { refresh: true as never}, // Trigger refresh on navigation
-            });
-          }
-        },
+        { text: "OK", onPress: onClose },
       ]);
     } catch (error) {
       console.error("Error saving item:", error);
@@ -123,6 +119,9 @@ export default function Upload() {
     }
   };
 
+  /**
+   * Updates the upload method and resets non-sell fields.
+   */
   const selectUploadMethod = (method: "sell" | "swap" | "donate"): void => {
     setUploadMethod(method);
     if (method !== "sell") {
@@ -131,6 +130,9 @@ export default function Upload() {
     }
   };
 
+  /**
+   * Renders a method selection button with proper styling.
+   */
   const renderMethodButton = ({
     method,
     label,
@@ -147,82 +149,44 @@ export default function Upload() {
       ]}
       onPress={() => selectUploadMethod(method)}
     >
-      <Text
-        style={[
-          styles.methodButtonText,
-          { color: uploadMethod === method ? "white" : "#666" },
-        ]}
-      >
+      <Text style={[styles.methodButtonText, { color: uploadMethod === method ? "#fff" : "#666" }]}>
         {label}
       </Text>
     </TouchableOpacity>
   );
 
-  const handleBackClick = () => {
-    router.replace({
-      pathname: "../app/(tabs)/Marketplace", // Ensure 'Marketplace' is the correct screen name
-    });
-  };
-
   return (
     <View style={styles.container}>
-      {/* Header */}
+      {/* Header Section with Back Button */}
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={handleBackClick} // Use handleBackClick for back navigation
-          style={styles.backButton}
-        >
+        <TouchableOpacity onPress={onClose} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
-        <Text style={styles.title}>List New Item</Text>
-        <View style={styles.placeholder} />
+        <Text style={styles.headerTitle}>List New Item</Text>
+        <View style={styles.headerPlaceholder} />
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Upload Method Selection */}
+        {/* Upload Method Selector */}
         <View style={styles.methodContainer}>
-          {renderMethodButton({
-            method: "sell",
-            label: "Sell",
-            color: "#4CAF50",
-          })}
-          {renderMethodButton({
-            method: "swap",
-            label: "Swap",
-            color: "#2196F3",
-          })}
-          {renderMethodButton({
-            method: "donate",
-            label: "Donate",
-            color: "#FF9800",
-          })}
+          {renderMethodButton({ method: "sell", label: "Sell", color: "#4CAF50" })}
+          {renderMethodButton({ method: "swap", label: "Swap", color: "#2196F3" })}
+          {renderMethodButton({ method: "donate", label: "Donate", color: "#FF9800" })}
         </View>
 
-        {/* Images Section */}
+        {/* Image Upload Section */}
         <Text style={styles.sectionTitle}>Upload Images</Text>
         <View style={styles.imageContainer}>
-          <TouchableOpacity style={styles.mainImagePlaceholder}>
+          <TouchableOpacity style={styles.mainImagePlaceholder} onPress={selectImage}>
             <Image source={{ uri: imageUrl }} style={styles.mainImagePreview} />
             <View style={styles.imageOverlay}>
               <Ionicons name="camera" size={32} color="#fff" />
               <Text style={styles.imageOverlayText}>Tap to add</Text>
             </View>
           </TouchableOpacity>
-
-          <View style={styles.thumbnailRow}>
-            <TouchableOpacity style={styles.thumbnailPlaceholder}>
-              <Ionicons name="add" size={24} color="#ccc" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.thumbnailPlaceholder}>
-              <Ionicons name="add" size={24} color="#ccc" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.thumbnailPlaceholder}>
-              <Ionicons name="add" size={24} color="#ccc" />
-            </TouchableOpacity>
-          </View>
         </View>
 
-        {/* Details Section */}
+        {/* Item Details Section */}
         <Text style={styles.sectionTitle}>Item Details</Text>
         <View style={styles.card}>
           <Text style={styles.inputLabel}>Title</Text>
@@ -247,11 +211,7 @@ export default function Upload() {
 
           <Text style={styles.inputLabel}>Category</Text>
           <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={category}
-              style={styles.picker}
-              onValueChange={(itemValue) => setCategory(itemValue)}
-            >
+            <Picker selectedValue={category} style={styles.picker} onValueChange={(itemValue) => setCategory(itemValue)}>
               <Picker.Item label="Electronics" value="Electronics" />
               <Picker.Item label="Books" value="Books" />
               <Picker.Item label="Furniture" value="Furniture" />
@@ -277,7 +237,7 @@ export default function Upload() {
                   value={negotiable}
                   onValueChange={setNegotiable}
                   trackColor={{ false: "#ccc", true: "#4CAF50" }}
-                  thumbColor={negotiable ? "#ffffff" : "#f4f3f4"}
+                  thumbColor={negotiable ? "#fff" : "#f4f3f4"}
                 />
                 <Text style={styles.checkboxLabel}>Price is negotiable</Text>
               </View>
@@ -294,8 +254,8 @@ export default function Upload() {
               uploadMethod === "sell"
                 ? `₹${price || "0"}`
                 : uploadMethod === "swap"
-                  ? "For Swap"
-                  : "Free"
+                ? "For Swap"
+                : "Free"
             }
             title={title || "Item Title"}
             description={description || "Item Description"}
@@ -305,27 +265,14 @@ export default function Upload() {
         </View>
 
         {/* Submit Button */}
-        <TouchableOpacity
-          style={styles.submitButton}
-          onPress={handleUpload}
-          disabled={isSaving}
-        >
+        <TouchableOpacity style={styles.submitButton} onPress={handleUpload} disabled={isSaving}>
           {isSaving ? (
             <ActivityIndicator color="#fff" size="small" />
           ) : (
             <>
-              <Ionicons
-                name="cloud-upload-outline"
-                size={20}
-                color="#fff"
-                style={styles.submitIcon}
-              />
+              <Ionicons name="cloud-upload-outline" size={20} color="#fff" style={styles.submitIcon} />
               <Text style={styles.submitText}>
-                {uploadMethod === "sell"
-                  ? "List For Sale"
-                  : uploadMethod === "swap"
-                    ? "List For Swap"
-                    : "List For Donation"}
+                {uploadMethod === "sell" ? "List For Sale" : uploadMethod === "swap" ? "List For Swap" : "List For Donation"}
               </Text>
             </>
           )}
@@ -338,7 +285,7 @@ export default function Upload() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f9f9f9",
+    backgroundColor: "#F9FAFB",
   },
   header: {
     flexDirection: "row",
@@ -347,22 +294,22 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: "#fff",
     borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
+    borderBottomColor: "#E5E7EB",
   },
   backButton: {
     padding: 8,
   },
-  placeholder: {
-    width: 40,
-  },
-  title: {
+  headerTitle: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#333",
+    color: "#111827",
+  },
+  headerPlaceholder: {
+    width: 40,
   },
   methodContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "space-around",
     padding: 16,
     backgroundColor: "#fff",
     marginBottom: 8,
@@ -385,7 +332,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 8,
-    color: "#333",
+    color: "#111827",
   },
   imageContainer: {
     padding: 16,
@@ -394,7 +341,7 @@ const styles = StyleSheet.create({
   mainImagePlaceholder: {
     width: "100%",
     height: 200,
-    backgroundColor: "#f0f0f0",
+    backgroundColor: "#E5E7EB",
     borderRadius: 8,
     marginBottom: 8,
     overflow: "hidden",
@@ -419,38 +366,30 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontWeight: "500",
   },
-  thumbnailRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  thumbnailPlaceholder: {
-    width: "32%",
-    height: 80,
-    backgroundColor: "#f0f0f0",
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 8,
-  },
   card: {
     backgroundColor: "#fff",
     borderRadius: 8,
     padding: 16,
     marginHorizontal: 16,
     marginBottom: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   inputLabel: {
     fontSize: 16,
     fontWeight: "500",
     marginBottom: 8,
-    color: "#333",
+    color: "#111827",
   },
   input: {
     borderWidth: 1,
-    borderColor: "#e0e0e0",
+    borderColor: "#E5E7EB",
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    backgroundColor: "#fafafa",
+    backgroundColor: "#F3F4F6",
     marginBottom: 16,
   },
   multilineInput: {
@@ -459,10 +398,10 @@ const styles = StyleSheet.create({
   },
   pickerContainer: {
     borderWidth: 1,
-    borderColor: "#e0e0e0",
+    borderColor: "#E5E7EB",
     borderRadius: 8,
     marginBottom: 16,
-    backgroundColor: "#fafafa",
+    backgroundColor: "#F3F4F6",
   },
   picker: {
     height: 50,
@@ -475,7 +414,7 @@ const styles = StyleSheet.create({
   checkboxLabel: {
     marginLeft: 8,
     fontSize: 16,
-    color: "#333",
+    color: "#111827",
   },
   previewContainer: {
     alignItems: "center",
