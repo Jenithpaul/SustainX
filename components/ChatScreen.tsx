@@ -13,7 +13,13 @@ interface Message {
 
 type ChatScreenRouteProp = RouteProp<{ params: { itemId: string; itemTitle: string; recipientId: string; recipientName: string } }, 'params'>;
 
-export default function ChatScreen({ route }: { route: ChatScreenRouteProp }) {
+export default function ChatScreen({ 
+  route,
+  onBack
+}: { 
+  route: ChatScreenRouteProp,
+  onBack?: () => void
+}) {
   const { itemId, itemTitle, recipientId, recipientName } = route.params;
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
@@ -96,11 +102,18 @@ export default function ChatScreen({ route }: { route: ChatScreenRouteProp }) {
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      keyboardVerticalOffset={100}
     >
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>{recipientName}</Text>
-        <Text style={styles.itemTitle}>{itemTitle}</Text>
+        {onBack && (
+          <TouchableOpacity onPress={onBack} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color="#333" />
+          </TouchableOpacity>
+        )}
+        <View>
+          <Text style={styles.headerTitle}>{recipientName}</Text>
+          <Text style={styles.itemTitle}>{itemTitle}</Text>
+        </View>
       </View>
 
       <FlatList
@@ -137,6 +150,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   headerTitle: {
     fontSize: 18,
@@ -196,5 +211,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 8,
+  },
+  backButton: {
+    marginRight: 12,
+    padding: 4,
   },
 });

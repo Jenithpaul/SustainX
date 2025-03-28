@@ -9,7 +9,7 @@ import Upload from "../../components/upload";
 import ChatScreen from "../../components/ChatScreen";
 import ProfilePage from "../../components/ProfilePage";
 import ItemDetails from "../../components/ItemDetails";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, router } from "expo-router";
 import styles from "../../components/ui/MarketplaceStyles";
 
 interface Item {
@@ -167,6 +167,10 @@ export default function Marketplace() {
 
   // Toggle the upload view
   const toggleUploadView = () => {
+    if (showUpload) {
+      // When closing the upload view, reload the marketplace data
+      loadMarketplaceData();
+    }
     setShowUpload(!showUpload);
   };
 
@@ -187,11 +191,12 @@ export default function Marketplace() {
 
   // Start a chat for the given item
   const startChat = (item: Item) => {
-    openChatScreen({
-      itemId: item.id!,
-      itemTitle: item.title,
-      recipientId: item.id!,
-      recipientName: item.username,
+    router.push({
+      pathname: '/(tabs)/Messages',
+      params: {
+        itemId: item.id!,
+        recipientId: item.id!
+      }
     });
   };
 
@@ -219,7 +224,7 @@ export default function Marketplace() {
       ) : showChat && chatDetails ? (
         <ChatScreen route={{ key: "chat", name: "params", params: chatDetails }} />
       ) : showProfile ? (
-        <ProfilePage />
+        <ProfilePage onClose={toggleProfileView} />
       ) : (
         <>
           <SearchBar

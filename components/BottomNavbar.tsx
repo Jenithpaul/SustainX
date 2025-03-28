@@ -19,6 +19,11 @@ const BottomNavbar = () => {
       route: '/(tabs)/Marketplace'
     },
     { 
+      name: 'Messages', 
+      icon: 'chatbubbles-outline', 
+      route: '/(tabs)/Messages'
+    },
+    { 
       name: 'Knowledge', 
       icon: 'book-outline', 
       route: '/(tabs)/Knowledge'

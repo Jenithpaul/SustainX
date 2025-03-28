@@ -32,9 +32,10 @@ interface UserProfile {
 
 interface ProfilePageProps {
   previousScreen?: string;
+  onClose?: () => void; // Add an onClose prop for direct usage in tabs
 }
 
-const ProfilePage: React.FC<ProfilePageProps> = ({ previousScreen }) => {
+const ProfilePage: React.FC<ProfilePageProps> = ({ previousScreen, onClose }) => {
   const router = useRouter();
   
   // State for user profile data
@@ -72,13 +73,6 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ previousScreen }) => {
       iconColor: '#4a4e69'
     },
     {
-      id: 'purchase',
-      icon: 'bag-outline',
-      label: 'Purchase History',
-      color: '#fdf6ec',
-      iconColor: '#e09f3e'
-    },
-    {
       id: 'help',
       icon: 'headset-outline',
       label: 'Help & Support',
@@ -94,31 +88,20 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ previousScreen }) => {
     }
   ];
 
-  // Navigate back to previous screen
-  const handleBackClick = async () => {
-    try {
-      // Try to get the stored previous tab
-      const storedPreviousTab = await AsyncStorage.getItem('previousTab');
-      
-      if (previousScreen) {
-        // Make sure previousScreen is a valid tab
-        const validTab = ['Home', 'Marketplace', 'Knowledge'].includes(previousScreen) 
-          ? previousScreen 
-          : 'Home';
-        router.replace(`/(tabs)/${validTab}`);
-      } else if (storedPreviousTab) {
-        // Make sure storedPreviousTab is a valid tab
-        const validTab = ['Home', 'Marketplace', 'Knowledge'].includes(storedPreviousTab) 
-          ? storedPreviousTab 
-          : 'Home';
-        router.replace(`/(tabs)/${validTab}`);
-      } else {
-        // Always navigate to a safe default route instead of using router.back()
-        router.replace("/(tabs)/Home");
-      }
-    } catch (error) {
-      console.error("Error navigating back:", error);
-      // Fallback to home if there's an error
+  // Handle close with proper navigation
+  const handleClose = () => {
+    // If onClose prop is provided, use it (when component is used as a modal)
+    if (onClose) {
+      onClose();
+      return;
+    }
+    
+    // Use the previousScreen prop to navigate back to the correct tab
+    // This assumes previousScreen is properly set when navigating to the profile
+    if (previousScreen && ['Home', 'Marketplace', 'Knowledge'].includes(previousScreen)) {
+      router.replace(`/(tabs)/${previousScreen}`);
+    } else {
+      // If no valid previousScreen, default to Home
       router.replace("/(tabs)/Home");
     }
   };
@@ -196,12 +179,12 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ previousScreen }) => {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.scrollContainer}>
-      {/* Header */}
+      {/* Header with X mark on the right */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={handleBackClick} style={styles.backButton}>
-          <Ionicons name="chevron-back" size={24} color="#000" />
-        </TouchableOpacity>
         <Text style={styles.headerTitle}>Profile</Text>
+        <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+          <Ionicons name="close" size={24} color="#000" />
+        </TouchableOpacity>
       </View>
 
       {/* Profile Info */}
@@ -293,12 +276,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#eaeaea',
   },
-  backButton: {
-    padding: 8,
-  },
   headerTitle: {
     fontSize: 18,
     fontWeight: '500',
+  },
+  closeButton: {
+    padding: 8,
   },
   profileSection: {
     alignItems: 'center',

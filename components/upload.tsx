@@ -99,6 +99,7 @@ export default function Upload({ onClose }: UploadProps) {
         negotiable: uploadMethod === "sell" ? negotiable : false,
         listedDate: new Date().toISOString(),
         type: uploadMethod,
+        username: "You", // Adding default username for new listings
       };
 
       // Retrieve and update existing items
@@ -106,11 +107,15 @@ export default function Upload({ onClose }: UploadProps) {
       const storedItems = storedItemsStr ? JSON.parse(storedItemsStr) : [];
       storedItems.unshift(newItem);
       await AsyncStorage.setItem("marketplaceItems", JSON.stringify(storedItems));
-
-      // Show success message and close upload view
-      Alert.alert("Success!", "Your item has been listed on the marketplace", [
-        { text: "OK", onPress: onClose },
-      ]);
+      
+      // First close the upload view automatically
+      onClose();
+      
+      // Then show success message (after view is closed)
+      Alert.alert(
+        "Success!", 
+        "Your item has been listed on the marketplace"
+      );
     } catch (error) {
       console.error("Error saving item:", error);
       Alert.alert("Error", "Failed to save your item. Please try again.");
@@ -228,7 +233,11 @@ export default function Upload({ onClose }: UploadProps) {
                 style={styles.input}
                 placeholder="Enter price"
                 value={price}
-                onChangeText={setPrice}
+                onChangeText={(text) => {
+                  // Allow only numeric values
+                  const numericValue = text.replace(/[^0-9]/g, "");
+                  setPrice(numericValue);
+                }}
                 keyboardType="numeric"
               />
 
