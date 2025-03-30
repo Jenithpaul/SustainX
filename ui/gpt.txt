@@ -1,0 +1,443 @@
+// import { StyleSheet } from "react-native";
+
+// export default StyleSheet.create({
+//   container: {
+//     flex: 1,
+//     backgroundColor: "#f9f9f9",
+//   },
+//   loadingContainer: {
+//     flex: 1,
+//     justifyContent: "center",
+//     alignItems: "center",
+//     backgroundColor: "#f9f9f9",
+//   },
+//   loadingText: {
+//     marginTop: 12,
+//     fontSize: 16,
+//     color: "#4CAF50",
+//   },
+//   scrollContent: {
+//     paddingHorizontal: 16,
+//     paddingBottom: 80,
+//   },
+//   sectionHeader: {
+//     flexDirection: "row",
+//     justifyContent: "space-between",
+//     alignItems: "center",
+//     paddingHorizontal: 16,
+//     marginTop: 16,
+//     marginBottom: 8,
+//   },
+//   sectionTitle: {
+//     fontSize: 18,
+//     fontWeight: "bold",
+//     color: "#333",
+//   },
+//   seeAllText: {
+//     fontSize: 14,
+//     color: "#4CAF50",
+//     fontWeight: "500",
+//   },
+//   featuredScroll: {
+//     paddingLeft: 16,
+//     paddingRight: 8,
+//   },
+//   featuredItem: {
+//     marginRight: 8,
+//     width: 200,
+//   },
+//   sortContainer: {
+//     flexDirection: "row",
+//     alignItems: "center",
+//   },
+//   sortText: {
+//     fontSize: 14,
+//     color: "#666",
+//     marginRight: 4,
+//   },
+//   sortButton: {
+//     flexDirection: "row",
+//     alignItems: "center",
+//     backgroundColor: "#f0f0f0",
+//     paddingHorizontal: 8,
+//     paddingVertical: 4,
+//     borderRadius: 16,
+//   },
+//   sortButtonText: {
+//     fontSize: 14,
+//     color: "#4CAF50",
+//     marginRight: 4,
+//   },
+//   gridContainer: {
+//     flexDirection: "row",
+//     flexWrap: "wrap",
+//     justifyContent: "space-between",
+//     paddingHorizontal: 16,
+//     marginTop: 8,
+//     marginBottom: 16,
+//   },
+//   gridItem: {
+//     width: "48%",
+//     marginBottom: 16,
+//   },
+//   emptyStateContainer: {
+//     flex: 1,
+//     justifyContent: "center",
+//     alignItems: "center",
+//     padding: 24,
+//   },
+//   emptyStateImage: {
+//     width: 150,
+//     height: 150,
+//     marginBottom: 16,
+//     opacity: 0.6,
+//   },
+//   emptyStateTitle: {
+//     fontSize: 20,
+//     fontWeight: "bold",
+//     marginBottom: 8,
+//     color: "#333",
+//   },
+//   emptyStateText: {
+//     fontSize: 16,
+//     color: "#666",
+//     textAlign: "center",
+//     marginBottom: 24,
+//   },
+//   emptyStateButton: {
+//     backgroundColor: "#4CAF50",
+//     paddingHorizontal: 24,
+//     paddingVertical: 12,
+//     borderRadius: 24,
+//   },
+//   emptyStateButtonText: {
+//     color: "#fff",
+//     fontWeight: "bold",
+//     fontSize: 16,
+//   },
+//   addButton: {
+//     position: "absolute",
+//     right: 24,
+//     bottom: 24,
+//     backgroundColor: "#4CAF50",
+//     padding: 12,
+//     borderRadius: 30,
+//   },
+// });
+
+
+// import { StyleSheet } from "react-native";
+
+// export default StyleSheet.create({
+//     container: {
+//       flex: 1,
+//       backgroundColor: "#F9FAFB",
+//     },
+//     loadingContainer: {
+//       flex: 1,
+//       justifyContent: "center",
+//       alignItems: "center",
+//       backgroundColor: "#F9FAFB",
+//     },
+//     loadingText: {
+//       marginTop: 12,
+//       fontSize: 16,
+//       color: "#10B981",
+//     },
+//     header: {
+//       flexDirection: "row",
+//       justifyContent: "space-between",
+//       alignItems: "center",
+//       paddingHorizontal: 16,
+//       paddingVertical: 12,
+//       backgroundColor: "white",
+//       borderBottomWidth: 1,
+//       borderBottomColor: "#E5E7EB",
+//     },
+//     title: {
+//       fontSize: 18,
+//       fontWeight: "bold",
+//       color: "#111827",
+//     },
+//     scrollContent: {
+//       paddingBottom: 80,
+//     },
+//     featuredContainer: {
+//       marginHorizontal: 16,
+//       marginTop: 16,
+//       backgroundColor: "#ECFDF5",
+//       borderRadius: 8,
+//       padding: 16,
+//     },
+//     sectionHeader: {
+//       flexDirection: "row",
+//       justifyContent: "space-between",
+//       alignItems: "center",
+//       marginBottom: 12,
+//     },
+//     sectionTitle: {
+//       fontSize: 16,
+//       fontWeight: "600",
+//       color: "#047857",
+//     },
+//     viewAllText: {
+//       fontSize: 14,
+//       color: "#10B981",
+//     },
+//     featuredCard: {
+//       backgroundColor: "white",
+//       borderRadius: 8,
+//       padding: 16,
+//     },
+//     courseTag: {
+//       fontSize: 12,
+//       color: "#10B981",
+//       marginBottom: 4,
+//     },
+//     courseTitle: {
+//       fontSize: 16,
+//       fontWeight: "bold",
+//       color: "#111827",
+//       marginBottom: 4,
+//     },
+//     courseDescription: {
+//       fontSize: 14,
+//       color: "#6B7280",
+//       marginBottom: 12,
+//     },
+//     startLearningButton: {
+//       flexDirection: "row",
+//       alignItems: "center",
+//     },
+//     startLearningText: {
+//       fontSize: 14,
+//       fontWeight: "500",
+//       color: "#10B981",
+//       marginRight: 4,
+//     },
+//     categoriesContainer: {
+//       paddingHorizontal: 16,
+//       marginTop: 24,
+//     },
+//     categoriesGrid: {
+//       flexDirection: "row",
+//       flexWrap: "wrap",
+//       justifyContent: "space-between",
+//     },
+//     categoryCard: {
+//       width: "48%",
+//       backgroundColor: "white",
+//       borderRadius: 8,
+//       padding: 16,
+//       marginBottom: 16,
+//       shadowColor: "#000",
+//       shadowOffset: { width: 0, height: 1 },
+//       shadowOpacity: 0.05,
+//       shadowRadius: 2,
+//       elevation: 1,
+//     },
+//     categoryIcon: {
+//       width: 40,
+//       height: 40,
+//       borderRadius: 20,
+//       justifyContent: "center",
+//       alignItems: "center",
+//       marginBottom: 12,
+//     },
+//     categoryTitle: {
+//       fontSize: 15,
+//       fontWeight: "500",
+//       color: "#111827",
+//       marginBottom: 4,
+//     },
+//     categoryCount: {
+//       fontSize: 12,
+//       color: "#6B7280",
+//     },
+//     magazinesContainer: {
+//       paddingHorizontal: 16,
+//       marginTop: 8,
+//       marginBottom: 80,
+//     },
+//     magazineItem: {
+//       flexDirection: "row",
+//       alignItems: "center",
+//       backgroundColor: "white",
+//       borderRadius: 8,
+//       padding: 8,
+//       marginBottom: 12,
+//     },
+//     magazineIcon: {
+//       width: 48,
+//       height: 48,
+//       borderRadius: 8,
+//       marginRight: 12,
+//     },
+//     magazineInfo: {
+//       flex: 1,
+//     },
+//     magazineTitle: {
+//       fontSize: 15,
+//       fontWeight: "500",
+//       color: "#111827",
+//       marginBottom: 4,
+//     },
+//     magazineDate: {
+//       fontSize: 12,
+//       color: "#6B7280",
+//     },
+//     toast: {
+//       position: "absolute",
+//       top: 40,
+//       left: 0,
+//       right: 0,
+//       backgroundColor: "rgba(0,0,0,0.7)",
+//       margin: 40,
+//       padding: 8,
+//       borderRadius: 8,
+//       alignItems: "center",
+//     },
+//     toastText: {
+//       color: "white",
+//       fontSize: 14,
+//     },
+//   });
+
+
+
+// import { StyleSheet } from "react-native";
+
+// export default StyleSheet.create({
+//   container: {
+//     flex: 1,
+//     backgroundColor: "#f4f4f4", // Slightly lighter background for a cleaner look
+//   },
+//   mainContent: {
+//     flex: 1,
+//     padding: 16,
+//   },
+//   banner: {
+//     backgroundColor: "#e0f7e9", // Softer green for a modern feel
+//     padding: 24,
+//     borderRadius: 16,
+//     marginBottom: 24,
+//     shadowColor: "#000",
+//     shadowOffset: { width: 0, height: 4 },
+//     shadowOpacity: 0.1,
+//     shadowRadius: 6,
+//     elevation: 4,
+//   },
+//   bannerTitle: {
+//     fontSize: 24,
+//     fontWeight: "700",
+//     color: "#1b5e20", // Darker green for better contrast
+//     marginBottom: 8,
+//   },
+//   bannerSubtitle: {
+//     fontSize: 15,
+//     color: "#4a4a4a",
+//     lineHeight: 22,
+//   },
+//   bannerButton: {
+//     backgroundColor: "#43a047", // Slightly darker green for the button
+//     paddingVertical: 12,
+//     paddingHorizontal: 28,
+//     borderRadius: 10,
+//     alignSelf: "flex-start",
+//     marginTop: 16,
+//   },
+//   bannerButtonText: {
+//     color: "#ffffff",
+//     fontWeight: "600",
+//     fontSize: 16,
+//   },
+//   sectionTitle: {
+//     fontSize: 20,
+//     fontWeight: "700",
+//     color: "#333333",
+//     marginTop: 16,
+//     marginBottom: 12,
+//   },
+//   actions: {
+//     flexDirection: "row",
+//     justifyContent: "space-between",
+//     marginBottom: 24,
+//   },
+//   actionButton: {
+//     alignItems: "center",
+//     width: "30%",
+//     padding: 12,
+//     borderRadius: 12,
+//     backgroundColor: "#ffffff",
+//     shadowColor: "#000",
+//     shadowOffset: { width: 0, height: 2 },
+//     shadowOpacity: 0.08,
+//     shadowRadius: 4,
+//     elevation: 2,
+//   },
+//   actionIcon: {
+//     width: 60,
+//     height: 60,
+//     borderRadius: 30,
+//     justifyContent: "center",
+//     alignItems: "center",
+//     marginBottom: 8,
+//     backgroundColor: "#f0f0f0", // Neutral background for icons
+//   },
+//   actionText: {
+//     fontSize: 14,
+//     fontWeight: "600",
+//     color: "#333333",
+//   },
+//   featuredItems: {
+//     marginBottom: 24,
+//   },
+//   featuredItem: {
+//     width: 220,
+//     marginRight: 16,
+//     borderRadius: 16,
+//     backgroundColor: "#ffffff",
+//     shadowColor: "#000",
+//     shadowOffset: { width: 0, height: 4 },
+//     shadowOpacity: 0.1,
+//     shadowRadius: 6,
+//     elevation: 3,
+//   },
+//   tipCard: {
+//     backgroundColor: "#ffffff",
+//     borderRadius: 16,
+//     padding: 20,
+//     flexDirection: "row",
+//     marginBottom: 16,
+//     shadowColor: "#000",
+//     shadowOffset: { width: 0, height: 4 },
+//     shadowOpacity: 0.1,
+//     shadowRadius: 6,
+//     elevation: 3,
+//   },
+//   tipIconContainer: {
+//     width: 50,
+//     height: 50,
+//     borderRadius: 25,
+//     backgroundColor: "#e0f7e9",
+//     justifyContent: "center",
+//     alignItems: "center",
+//     marginRight: 16,
+//   },
+//   tipContent: {
+//     flex: 1,
+//   },
+//   tipTitle: {
+//     fontSize: 16,
+//     fontWeight: "700",
+//     marginBottom: 4,
+//     color: "#333333",
+//   },
+//   tipText: {
+//     fontSize: 14,
+//     color: "#555555",
+//     lineHeight: 20,
+//   },
+// });
+
+

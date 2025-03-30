@@ -1,10 +1,12 @@
+// Home.tsx
 import React, { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import FeaturedCard from "../../components/FeaturedCard";
-import styles from "../../components/ui/HomeStyles"; // Adjust the import path as necessary
+import { useHomeStyles } from "../../ui/HomeStyles";
+import Header from "../../components/Header";
 
 interface FeaturedItem {
   image: string;
@@ -12,9 +14,11 @@ interface FeaturedItem {
   title: string;
   description: string;
   isLiked?: boolean;
+  negotiable?: boolean;
 }
 
 export default function Home() {
+  const styles = useHomeStyles();
   const [featuredItems, setFeaturedItems] = useState<FeaturedItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -38,6 +42,7 @@ export default function Home() {
 
   return (
     <View style={styles.container}>
+      <Header currentTab="Home" />
       <ScrollView style={styles.mainContent}>
         <View style={styles.banner}>
           <Text style={styles.bannerTitle}>Make Your Campus Greener</Text>
@@ -52,13 +57,12 @@ export default function Home() {
           </TouchableOpacity>
         </View>
 
- {/* Quick Actions */}
-
+        {/* Quick Actions */}
         <Text style={styles.sectionTitle}>Quick Actions</Text>
         <View style={styles.actions}>
           <TouchableOpacity 
             style={styles.actionButton}
-            onPress={() => router.push({ pathname: "/(tabs)/Marketplace", params: { method: "swap" } })} // Pass method as a parameter
+            onPress={() => router.push({ pathname: "/(tabs)/Marketplace", params: { method: "swap" } })}
           >
             <View style={[styles.actionIcon, { backgroundColor: "#e0f7fa" }]}>
               <Ionicons name="swap-horizontal" size={24} color="#00838f" />
@@ -67,7 +71,7 @@ export default function Home() {
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.actionButton}
-            onPress={() => router.push({ pathname: "/(tabs)/Marketplace", params: { method: "sell" } })} // Pass method as a parameter
+            onPress={() => router.push({ pathname: "/(tabs)/Marketplace", params: { method: "sell" } })}
           >
             <View style={[styles.actionIcon, { backgroundColor: "#e8f5e9" }]}>
               <Ionicons name="cash" size={24} color="#2e7d32" />
@@ -76,7 +80,7 @@ export default function Home() {
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.actionButton}
-            onPress={() => router.push({ pathname: "/(tabs)/Marketplace", params: { method: "donate" } })} // Pass method as a parameter
+            onPress={() => router.push({ pathname: "/(tabs)/Marketplace", params: { method: "donate" } })}
           >
             <View style={[styles.actionIcon, { backgroundColor: "#fff3e0" }]}>
               <Ionicons name="gift" size={24} color="#e65100" />
@@ -85,6 +89,7 @@ export default function Home() {
           </TouchableOpacity>
         </View>
 
+        {/* Featured Items */}
         <Text style={styles.sectionTitle}>Featured Items</Text>
         {isLoading ? (
           <ActivityIndicator size="large" color="#4CAF50" />
@@ -98,6 +103,7 @@ export default function Home() {
                   title={item.title}
                   description={item.description}
                   isLiked={item.isLiked ?? false}
+                  negotiable={item.negotiable}
                   onLikeToggle={() => {}}
                   onPress={() => router.push("/(tabs)/Marketplace")}
                 />
@@ -105,7 +111,8 @@ export default function Home() {
             ))}
           </ScrollView>
         )}
-{/* KnowledgeCentre Suggestions */}
+
+        {/* Sustainability Tips */}
         <Text style={styles.sectionTitle}>Sustainability Tips</Text>
         <View style={styles.tipCard}>
           <View style={styles.tipIconContainer}>
@@ -120,4 +127,3 @@ export default function Home() {
     </View>
   );
 }
-

@@ -1,17 +1,22 @@
+// components/SearchBar.tsx
 import React from "react";
-import { View, TextInput, StyleSheet, TouchableOpacity, ScrollView, Text } from "react-native";
+import { View, TextInput, TouchableOpacity, ScrollView, Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useSearchBarStyles } from "../ui/SearchBarStyle"; // Import dynamic styles
 
 interface SearchBarProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   selectedTag: string;
   setSelectedTag: (tag: string) => void;
-  tags: string[];
+  tags?: string[];
   showWishlist: boolean;
   toggleWishlist: () => void;
 }
 
+/**
+ * SearchBar Component: A reusable search bar with category filters and wishlist toggle.
+ */
 const SearchBar: React.FC<SearchBarProps> = ({
   searchQuery,
   setSearchQuery,
@@ -21,19 +26,23 @@ const SearchBar: React.FC<SearchBarProps> = ({
   showWishlist,
   toggleWishlist
 }) => {
+  const styles = useSearchBarStyles();
+
+  // Clears the search input field
   const clearSearch = () => {
     setSearchQuery("");
   };
 
   return (
     <View style={styles.container}>
-      {/* Search Input */}
+      {/* Search Input Field */}
       <View style={styles.searchContainer}>
         <View style={styles.searchInputContainer}>
           <Ionicons name="search-outline" size={20} color="#999" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search for items..."
+            placeholderTextColor="#999"
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
@@ -43,6 +52,8 @@ const SearchBar: React.FC<SearchBarProps> = ({
             </TouchableOpacity>
           )}
         </View>
+
+        {/* Wishlist Toggle Button */}
         <TouchableOpacity onPress={toggleWishlist} style={styles.wishlistButton}>
           <Ionicons name={showWishlist ? "heart" : "heart-outline"} size={24} color="#4CAF50" />
         </TouchableOpacity>
@@ -54,88 +65,24 @@ const SearchBar: React.FC<SearchBarProps> = ({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.categoriesContainer}
       >
-        {tags.map((tag) => (
-          <TouchableOpacity
-            key={tag}
-            style={[
-              styles.categoryChip,
-              selectedTag === tag && styles.selectedCategoryChip
-            ]}
-            onPress={() => setSelectedTag(tag)}
-          >
-            <Text
-              style={[
-                styles.categoryText,
-                selectedTag === tag && styles.selectedCategoryText
-              ]}
+        {tags.map((tag) => {
+          const isSelected = selectedTag === tag;
+
+          return (
+            <TouchableOpacity
+              key={tag}
+              style={[styles.categoryChip, isSelected && styles.selectedCategoryChip]}
+              onPress={() => setSelectedTag(tag)}
             >
-              {tag}
-            </Text>
-          </TouchableOpacity>
-        ))}
+              <Text style={[styles.categoryText, isSelected && styles.selectedCategoryText]}>
+                {tag}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: "#fff",
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
-  },
-  searchContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  searchInputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#f5f5f5",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    height: 46,
-    flex: 1,
-  },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-    color: "#333",
-  },
-  clearButton: {
-    padding: 4,
-  },
-  wishlistButton: {
-    marginLeft: 8,
-  },
-  categoriesContainer: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-  },
-  categoryChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: "#f5f5f5",
-    borderRadius: 20,
-    marginHorizontal: 4,
-  },
-  selectedCategoryChip: {
-    backgroundColor: "#4CAF50",
-  },
-  categoryText: {
-    fontSize: 14,
-    color: "#666",
-  },
-  selectedCategoryText: {
-    color: "#fff",
-    fontWeight: "500",
-  },
-});
 
 export default SearchBar;

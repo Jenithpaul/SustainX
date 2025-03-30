@@ -1,21 +1,30 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator, RefreshControl } from "react-native";
+import { 
+  View, 
+  Text, 
+  ScrollView, 
+  TouchableOpacity, 
+  Image, 
+  RefreshControl 
+} from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
-import { useRouter } from 'expo-router'; // Changed from 'next/router' to 'expo-router'
-import styles from "../../components/ui/KnowledgeStyle";
+import { useRouter } from "expo-router";
+import { useKnowledgeStyles } from "../../ui/KnowledgeStyle";
+import Header from "../../components/Header";
 
 export default function KnowledgeCentre() {
   const navigation = useNavigation();
-  const router = useRouter(); // Add this line
-  const [activeTab, setActiveTab] = useState('Home');
-  const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
+  const styles = useKnowledgeStyles();
+  
+  const [activeTab, setActiveTab] = useState("Home");
   const [refreshing, setRefreshing] = useState(false);
-  const [feedbackMessage, setFeedbackMessage] = useState(''); 
+  const [feedbackMessage, setFeedbackMessage] = useState("");
 
   const showFeedback = (message: string) => {
     setFeedbackMessage(message);
-    setTimeout(() => setFeedbackMessage(''), 2000);
+    setTimeout(() => setFeedbackMessage(""), 2000);
   };
 
   const handleBackClick = () => {
@@ -23,11 +32,11 @@ export default function KnowledgeCentre() {
   };
 
   const handleSearchClick = () => {
-    navigation.navigate('Search' as never);
+    navigation.navigate("Search" as never);
   };
 
   const handleViewAllFeatured = () => {
-    navigation.navigate('Featured' as never);
+    navigation.navigate("Featured" as never);
   };
 
   const handleStartLearning = () => {
@@ -39,7 +48,7 @@ export default function KnowledgeCentre() {
   };
 
   const handleViewAllMagazines = () => {
-    navigation.navigate('Magazines' as never);
+    navigation.navigate("Magazines" as never);
   };
 
   const handleMagazineClick = (id: string) => {
@@ -48,7 +57,7 @@ export default function KnowledgeCentre() {
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
-    if (tab !== 'home') {
+    if (tab.toLowerCase() !== "home") {
       (navigation as any).navigate(tab.charAt(0).toUpperCase() + tab.slice(1));
     }
   };
@@ -56,15 +65,13 @@ export default function KnowledgeCentre() {
   const navigateToProfile = () => {
     router.push({
       pathname: "/profile",
-      params: { previousScreen: "knowledge" } // Keep 'params' for Expo Router
+      params: { previousScreen: "knowledge" }
     });
   };
 
   const loadData = async () => {
-    setIsLoading(true);
-    // Simulated data loading
+    // Simulated data loading (replace with actual API calls if needed)
     setTimeout(() => {
-      setIsLoading(false);
       setRefreshing(false);
     }, 500);
   };
@@ -87,59 +94,64 @@ export default function KnowledgeCentre() {
 
   const categories = [
     {
-      id: 'podcasts',
-      title: 'Podcasts',
-      count: '12 New Episodes',
+      id: "podcasts",
+      title: "Podcasts",
+      count: "12 New Episodes",
       icon: <Feather name="mic" size={20} color="#6366F1" />,
-      bgColor: '#EEF2FF'
+      bgColor: "#EEF2FF"
     },
     {
-      id: 'courses',
-      title: 'Courses',
-      count: '45 Available',
+      id: "courses",
+      title: "Courses",
+      count: "45 Available",
       icon: <Feather name="book" size={20} color="#3B82F6" />,
-      bgColor: '#EFF6FF'
+      bgColor: "#EFF6FF"
     },
     {
-      id: 'quizzes',
-      title: 'Quizzes',
-      count: '8 New Quizzes',
+      id: "quizzes",
+      title: "Quizzes",
+      count: "8 New Quizzes",
       icon: <Feather name="target" size={20} color="#F97316" />,
-      bgColor: '#FFF7ED'
+      bgColor: "#FFF7ED"
     },
     {
-      id: 'mental-health',
-      title: 'Mental Health',
-      count: '24/7 Support',
+      id: "mental-health",
+      title: "Mental Health",
+      count: "24/7 Support",
       icon: <Feather name="heart" size={20} color="#EF4444" />,
-      bgColor: '#FEF2F2'
+      bgColor: "#FEF2F2"
     }
   ];
 
   const magazines = [
     {
-      id: 'green-campus-today',
-      title: 'Green Campus Today',
-      date: 'March 2025 Edition',
-      color: '#D1FAE5',
-      image: 'https://via.placeholder.com/60'
+      id: "green-campus-today",
+      title: "Green Campus Today",
+      date: "March 2025 Edition",
+      color: "#D1FAE5",
+      image: "https://via.placeholder.com/60"
     },
     {
-      id: 'sustainability-report',
-      title: 'Sustainability Report',
-      date: 'Environmental Impact Analysis',
-      color: '#DBEAFE',
-      image: 'https://via.placeholder.com/60'
+      id: "sustainability-report",
+      title: "Sustainability Report",
+      date: "Environmental Impact Analysis",
+      color: "#DBEAFE",
+      image: "https://via.placeholder.com/60"
     }
   ];
 
   return (
     <View style={styles.container}>
+      <Header currentTab="Knowledge" />
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#10B981"]} />
+          <RefreshControl 
+            refreshing={refreshing} 
+            onRefresh={onRefresh} 
+            colors={["#10B981"]} 
+          />
         }
       >
         {/* Featured Section */}
@@ -150,12 +162,16 @@ export default function KnowledgeCentre() {
               <Text style={styles.viewAllText}>View All</Text>
             </TouchableOpacity>
           </View>
-          
           <View style={styles.featuredCard}>
             <Text style={styles.courseTag}>New Course</Text>
             <Text style={styles.courseTitle}>Sustainable Development Goals</Text>
-            <Text style={styles.courseDescription}>Learn about UN's 17 SDGs and their implementation</Text>
-            <TouchableOpacity style={styles.startLearningButton} onPress={handleStartLearning}>
+            <Text style={styles.courseDescription}>
+              Learn about UN's 17 SDGs and their implementation
+            </Text>
+            <TouchableOpacity 
+              style={styles.startLearningButton} 
+              onPress={handleStartLearning}
+            >
               <Text style={styles.startLearningText}>Start Learning</Text>
               <Feather name="chevron-right" size={16} color="#10B981" />
             </TouchableOpacity>
@@ -165,7 +181,7 @@ export default function KnowledgeCentre() {
         {/* Categories Grid */}
         <View style={styles.categoriesContainer}>
           <View style={styles.categoriesGrid}>
-            {categories.map(category => (
+            {categories.map((category) => (
               <TouchableOpacity 
                 key={category.id} 
                 style={styles.categoryCard}
@@ -189,15 +205,14 @@ export default function KnowledgeCentre() {
               <Text style={styles.viewAllText}>View All</Text>
             </TouchableOpacity>
           </View>
-
-          {magazines.map(magazine => (
+          {magazines.map((magazine) => (
             <TouchableOpacity 
               key={magazine.id}
               style={styles.magazineItem}
               onPress={() => handleMagazineClick(magazine.id)}
             >
               <View style={[styles.magazineIcon, { backgroundColor: magazine.color }]}>
-                {/* Placeholder for magazine icon/image */}
+                {/* Placeholder for magazine image/icon */}
               </View>
               <View style={styles.magazineInfo}>
                 <Text style={styles.magazineTitle}>{magazine.title}</Text>
@@ -209,7 +224,7 @@ export default function KnowledgeCentre() {
       </ScrollView>
 
       {/* Feedback Toast */}
-      {feedbackMessage !== '' && (
+      {feedbackMessage !== "" && (
         <View style={styles.toast}>
           <Text style={styles.toastText}>{feedbackMessage}</Text>
         </View>
@@ -217,4 +232,3 @@ export default function KnowledgeCentre() {
     </View>
   );
 }
-

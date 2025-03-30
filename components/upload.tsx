@@ -10,6 +10,9 @@ import {
   Image,
   Alert,
   ActivityIndicator,
+  Platform,
+  Modal,
+  SafeAreaView,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { Switch } from "react-native";
@@ -28,7 +31,7 @@ interface UploadProps {
  * - Uses a styling theme inspired by the Knowledge page.
  * - Calls the onClose callback when the user taps the back arrow or after a successful listing.
  */
-export default function Upload({ onClose }: UploadProps) {
+const Upload: React.FC<UploadProps> = ({ onClose }) => {
   const router = useRouter();
 
   // Component state
@@ -40,6 +43,7 @@ export default function Upload({ onClose }: UploadProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [imageUrl, setImageUrl] = useState("https://via.placeholder.com/150");
   const [uploadMethod, setUploadMethod] = useState<"sell" | "swap" | "donate">("sell");
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
 
   /**
    * Validates the form before upload.
@@ -160,6 +164,77 @@ export default function Upload({ onClose }: UploadProps) {
     </TouchableOpacity>
   );
 
+  // Categories data
+  const categories = [
+    { label: "Electronics", value: "Electronics" },
+    { label: "Books", value: "Books" },
+    { label: "Furniture", value: "Furniture" },
+    { label: "Clothes", value: "Clothes" },
+    { label: "Sports", value: "Sports" },
+    { label: "Others", value: "Others" },
+  ];
+
+  // Platform-specific category selector
+  const renderCategorySelector = () => {
+    if (Platform.OS === 'ios') {
+      return (
+        <>
+          <TouchableOpacity 
+            style={styles.categoryButton} 
+            onPress={() => setShowCategoryModal(true)}
+          >
+            <Text style={styles.categoryButtonText}>{category}</Text>
+            <Ionicons name="chevron-down" size={20} color="#666" />
+          </TouchableOpacity>
+          
+          <Modal
+            transparent={true}
+            visible={showCategoryModal}
+            animationType="slide"
+            onRequestClose={() => setShowCategoryModal(false)}
+          >
+            <SafeAreaView style={styles.modalContainer}>
+              <View style={styles.modalContent}>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>Select Category</Text>
+                  <TouchableOpacity onPress={() => setShowCategoryModal(false)}>
+                    <Ionicons name="close" size={24} color="#333" />
+                  </TouchableOpacity>
+                </View>
+                <Picker
+                  selectedValue={category}
+                  onValueChange={(itemValue) => {
+                    setCategory(itemValue);
+                    setShowCategoryModal(false);
+                  }}
+                >
+                  {categories.map(cat => (
+                    <Picker.Item key={cat.value} label={cat.label} value={cat.value} />
+                  ))}
+                </Picker>
+              </View>
+            </SafeAreaView>
+          </Modal>
+        </>
+      );
+    } else {
+      // Android picker
+      return (
+        <View style={styles.pickerContainer}>
+          <Picker 
+            selectedValue={category} 
+            style={styles.picker} 
+            onValueChange={(itemValue) => setCategory(itemValue)}
+          >
+            {categories.map(cat => (
+              <Picker.Item key={cat.value} label={cat.label} value={cat.value} />
+            ))}
+          </Picker>
+        </View>
+      );
+    }
+  };
+
   return (
     <View style={styles.container}>
       {/* Header Section with Back Button */}
@@ -215,16 +290,7 @@ export default function Upload({ onClose }: UploadProps) {
           />
 
           <Text style={styles.inputLabel}>Category</Text>
-          <View style={styles.pickerContainer}>
-            <Picker selectedValue={category} style={styles.picker} onValueChange={(itemValue) => setCategory(itemValue)}>
-              <Picker.Item label="Electronics" value="Electronics" />
-              <Picker.Item label="Books" value="Books" />
-              <Picker.Item label="Furniture" value="Furniture" />
-              <Picker.Item label="Clothes" value="Clothes" />
-              <Picker.Item label="Sports" value="Sports" />
-              <Picker.Item label="Others" value="Others" />
-            </Picker>
-          </View>
+          {renderCategorySelector()}
 
           {uploadMethod === "sell" && (
             <>
@@ -289,7 +355,9 @@ export default function Upload({ onClose }: UploadProps) {
       </ScrollView>
     </View>
   );
-}
+};
+
+export default Upload;
 
 const styles = StyleSheet.create({
   container: {
@@ -300,28 +368,34 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 12,
     backgroundColor: "#fff",
     borderBottomWidth: 1,
     borderBottomColor: "#E5E7EB",
   },
   backButton: {
-    padding: 8,
+    padding: 10,
+    minWidth: 44, // Increased for better touch target
+    minHeight: 44,
+    justifyContent: "center",
+    alignItems: "center",
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "bold",
     color: "#111827",
   },
   headerPlaceholder: {
-    width: 40,
+    width: 44,
+    minHeight: 44,
   },
   methodContainer: {
     flexDirection: "row",
-    justifyContent: "space-around",
-    padding: 16,
-    backgroundColor: "#fff",
-    marginBottom: 8,
+    justifyContent: "space-between",
+    padding: 12,
+    marginHorizontal: 16,
+    marginTop: 8,
   },
   methodButton: {
     flex: 1,
@@ -448,5 +522,44 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
+  },
+  categoryButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+    backgroundColor: "#F3F4F6",
+  },
+  categoryButtonText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 15,
+    borderTopRightRadius: 15,
+    paddingBottom: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#111827',
   },
 });

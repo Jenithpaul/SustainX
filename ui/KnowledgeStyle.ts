@@ -1,20 +1,24 @@
 import { StyleSheet } from "react-native";
+import { useTheme } from '../contexts/ThemeContext';
 
-export default StyleSheet.create({
+export const useKnowledgeStyles = () => {
+  const theme = useTheme();
+
+  return StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: "#F9FAFB",
+      backgroundColor: theme.background,
     },
     loadingContainer: {
       flex: 1,
       justifyContent: "center",
       alignItems: "center",
-      backgroundColor: "#F9FAFB",
+      backgroundColor: theme.background,
     },
     loadingText: {
       marginTop: 12,
       fontSize: 16,
-      color: "#10B981",
+      color: theme.accent,
     },
     header: {
       flexDirection: "row",
@@ -22,14 +26,14 @@ export default StyleSheet.create({
       alignItems: "center",
       paddingHorizontal: 16,
       paddingVertical: 12,
-      backgroundColor: "white",
+      backgroundColor: theme.backgroundSecondary,
       borderBottomWidth: 1,
-      borderBottomColor: "#E5E7EB",
+      borderBottomColor: theme.border,
     },
     title: {
       fontSize: 18,
       fontWeight: "bold",
-      color: "#111827",
+      color: theme.text,
     },
     scrollContent: {
       paddingBottom: 80,
@@ -37,7 +41,7 @@ export default StyleSheet.create({
     featuredContainer: {
       marginHorizontal: 16,
       marginTop: 16,
-      backgroundColor: "#ECFDF5",
+      backgroundColor: theme.banner.background,
       borderRadius: 8,
       padding: 16,
     },
@@ -50,31 +54,31 @@ export default StyleSheet.create({
     sectionTitle: {
       fontSize: 16,
       fontWeight: "600",
-      color: "#047857",
+      color: theme.banner.title,
     },
     viewAllText: {
       fontSize: 14,
-      color: "#10B981",
+      color: theme.accent,
     },
     featuredCard: {
-      backgroundColor: "white",
+      backgroundColor: theme.cardBackground,
       borderRadius: 8,
       padding: 16,
     },
     courseTag: {
       fontSize: 12,
-      color: "#10B981",
+      color: theme.accent,
       marginBottom: 4,
     },
     courseTitle: {
       fontSize: 16,
       fontWeight: "bold",
-      color: "#111827",
+      color: theme.text,
       marginBottom: 4,
     },
     courseDescription: {
       fontSize: 14,
-      color: "#6B7280",
+      color: theme.textSecondary,
       marginBottom: 12,
     },
     startLearningButton: {
@@ -84,7 +88,7 @@ export default StyleSheet.create({
     startLearningText: {
       fontSize: 14,
       fontWeight: "500",
-      color: "#10B981",
+      color: theme.accent,
       marginRight: 4,
     },
     categoriesContainer: {
@@ -98,7 +102,7 @@ export default StyleSheet.create({
     },
     categoryCard: {
       width: "48%",
-      backgroundColor: "white",
+      backgroundColor: theme.cardBackground,
       borderRadius: 8,
       padding: 16,
       marginBottom: 16,
@@ -119,12 +123,12 @@ export default StyleSheet.create({
     categoryTitle: {
       fontSize: 15,
       fontWeight: "500",
-      color: "#111827",
+      color: theme.text,
       marginBottom: 4,
     },
     categoryCount: {
       fontSize: 12,
-      color: "#6B7280",
+      color: theme.textSecondary,
     },
     magazinesContainer: {
       paddingHorizontal: 16,
@@ -134,7 +138,7 @@ export default StyleSheet.create({
     magazineItem: {
       flexDirection: "row",
       alignItems: "center",
-      backgroundColor: "white",
+      backgroundColor: theme.cardBackground,
       borderRadius: 8,
       padding: 8,
       marginBottom: 12,
@@ -151,12 +155,12 @@ export default StyleSheet.create({
     magazineTitle: {
       fontSize: 15,
       fontWeight: "500",
-      color: "#111827",
+      color: theme.text,
       marginBottom: 4,
     },
     magazineDate: {
       fontSize: 12,
-      color: "#6B7280",
+      color: theme.textSecondary,
     },
     toast: {
       position: "absolute",
@@ -170,7 +174,8 @@ export default StyleSheet.create({
       alignItems: "center",
     },
     toastText: {
-      color: "white",
+      color: "#fff",
       fontSize: 14,
     },
   });
+};

@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, KeyboardAvoidingView, Platform, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RouteProp } from '@react-navigation/native';
+import * as ImagePicker from 'expo-image-picker'; // Import ImagePicker
 
 interface Message {
   id: string;
   text: string;
   sender: 'user' | 'other';
   timestamp: number;
+  image?: string; // Add optional image property
 }
 
 type ChatScreenRouteProp = RouteProp<{ params: { itemId: string; itemTitle: string; recipientId: string; recipientName: string } }, 'params'>;
@@ -86,14 +88,55 @@ export default function ChatScreen({
     }
   };
 
+  const sendImage = async (imageUri: string) => {
+    const newMessage: Message = {
+      id: Date.now().toString(),
+      text: '',
+      sender: 'user',
+      timestamp: Date.now(),
+      image: imageUri, // Attach the image URI
+    };
+
+    const updatedMessages = [...messages, newMessage];
+    setMessages(updatedMessages);
+
+    try {
+      const chatKey = `chat_${itemId}_${recipientId}`;
+      await AsyncStorage.setItem(chatKey, JSON.stringify(updatedMessages));
+    } catch (error) {
+      console.error('Error saving image message:', error);
+    }
+  };
+
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      sendImage(result.assets[0].uri); // Send the selected image
+    }
+  };
+
   const renderMessage = ({ item }: { item: Message }) => (
-    <View style={[
-      styles.messageBubble,
-      item.sender === 'user' ? styles.userMessage : styles.otherMessage
-    ]}>
-      <Text style={styles.messageText}>{item.text}</Text>
+    <View
+      style={[
+        styles.messageBubble,
+        item.sender === 'user' ? styles.userMessage : styles.otherMessage,
+      ]}
+    >
+      {item.image ? (
+        <Image source={{ uri: item.image }} style={styles.messageImage} />
+      ) : (
+        <Text style={styles.messageText}>{item.text}</Text>
+      )}
       <Text style={styles.timestamp}>
-        {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        {new Date(item.timestamp).toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+        })}
       </Text>
     </View>
   );
@@ -125,6 +168,9 @@ export default function ChatScreen({
       />
 
       <View style={styles.inputContainer}>
+        <TouchableOpacity onPress={pickImage} style={styles.attachButton}>
+          <Ionicons name="add" size={24} color="#000" />
+        </TouchableOpacity>
         <TextInput
           style={styles.input}
           value={inputText}
@@ -211,6 +257,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 8,
+  },
+  attachButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  messageImage: {
+    width: 200,
+    height: 200,
+    borderRadius: 10,
+    marginBottom: 8,
   },
   backButton: {
     marginRight: 12,

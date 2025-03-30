@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, TouchableOpacity, Image, ActivityIndicator, RefreshControl, Alert } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  ActivityIndicator,
+  RefreshControl,
+  Alert
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import FeaturedCard from "../../components/FeaturedCard";
 import SearchBar from "../../components/SearchBar";
@@ -10,7 +19,8 @@ import ChatScreen from "../../components/ChatScreen";
 import ProfilePage from "../../components/ProfilePage";
 import ItemDetails from "../../components/ItemDetails";
 import { useLocalSearchParams, router } from "expo-router";
-import styles from "../../components/ui/MarketplaceStyles";
+import { useMarketplaceStyles } from "../../ui/MarketplaceStyles";
+import Header from "../../components/Header";
 
 interface Item {
   image: string;
@@ -21,11 +31,13 @@ interface Item {
   id?: string;
   isLiked?: boolean;
   username: string;
+  negotiable?: boolean;
 }
 
 export default function Marketplace() {
   const { method } = useLocalSearchParams<{ method?: string }>();
   const navigation = useNavigation();
+  const styles = useMarketplaceStyles();
 
   // Marketplace UI states
   const [searchQuery, setSearchQuery] = useState("");
@@ -36,7 +48,12 @@ export default function Marketplace() {
   const [showUpload, setShowUpload] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
-  const [chatDetails, setChatDetails] = useState<{ itemId: string; itemTitle: string; recipientId: string; recipientName: string } | null>(null);
+  const [chatDetails, setChatDetails] = useState<{
+    itemId: string;
+    itemTitle: string;
+    recipientId: string;
+    recipientName: string;
+  } | null>(null);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [items, setItems] = useState<Item[]>([]);
 
@@ -51,6 +68,7 @@ export default function Marketplace() {
       tag: "Electronics",
       isLiked: false,
       username: "John Doe",
+      negotiable: true,
     },
     {
       id: "2",
@@ -61,16 +79,19 @@ export default function Marketplace() {
       tag: "Books",
       isLiked: false,
       username: "Jane Smith",
+      negotiable: false,
     },
     {
       id: "3",
-      image: "https://tse2.mm.bing.net/th?id=OIP.uLgbHigFVo5rfNajwAhRXwHaE5&pid=Api&P=0&h=180",
+      image:
+        "https://tse2.mm.bing.net/th?id=OIP.uLgbHigFVo5rfNajwAhRXwHaE5&pid=Api&P=0&h=180",
       price: "₹99",
       title: "Mechanical Keyboard",
       description: "Brand new, RGB lighting",
       tag: "Electronics",
       isLiked: false,
       username: "Alice Johnson",
+      negotiable: true,
     },
     {
       id: "4",
@@ -81,6 +102,7 @@ export default function Marketplace() {
       tag: "Electronics",
       isLiked: false,
       username: "Bob Brown",
+      negotiable: false,
     },
   ];
 
@@ -175,7 +197,12 @@ export default function Marketplace() {
   };
 
   // Open the chat screen with provided details
-  const openChatScreen = (chatDetails: { itemId: string; itemTitle: string; recipientId: string; recipientName: string }) => {
+  const openChatScreen = (chatDetails: {
+    itemId: string;
+    itemTitle: string;
+    recipientId: string;
+    recipientName: string;
+  }) => {
     setChatDetails(chatDetails);
     setShowChat(true);
   };
@@ -192,7 +219,7 @@ export default function Marketplace() {
   // Start a chat for the given item
   const startChat = (item: Item) => {
     router.push({
-      pathname: '/(tabs)/Messages',
+      pathname: "/(tabs)/Messages",
       params: {
         itemId: item.id!,
         recipientId: item.id!
@@ -207,6 +234,7 @@ export default function Marketplace() {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
+        <Header currentTab="Marketplace" />
         <ActivityIndicator size="large" color="#4CAF50" />
         <Text style={styles.loadingText}>Loading marketplace...</Text>
       </View>
@@ -215,6 +243,7 @@ export default function Marketplace() {
 
   return (
     <View style={styles.container}>
+      <Header currentTab="Marketplace" />
       {/* Render ItemDetails if an item is selected */}
       {selectedItem ? (
         <ItemDetails item={selectedItem} onStartChat={() => startChat(selectedItem)} onClose={closeItemDetails} />
@@ -259,6 +288,7 @@ export default function Marketplace() {
                           title={item.title}
                           description={item.description}
                           isLiked={item.isLiked ?? false}
+                          negotiable={item.negotiable}
                           onLikeToggle={() => toggleLike(item.id!)}
                           onPress={() => openItemDetails(item)}
                         />
@@ -288,6 +318,7 @@ export default function Marketplace() {
                       title={item.title}
                       description={item.description}
                       isLiked={item.isLiked ?? false}
+                      negotiable={item.negotiable}
                       onLikeToggle={() => toggleLike(item.id!)}
                       onPress={() => openItemDetails(item)}
                     />

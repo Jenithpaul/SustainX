@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
 interface Chat {
@@ -38,6 +38,10 @@ export default function ChatList({
         recipientName: item.name 
       })}
     >
+      <Image 
+        source={{ uri: 'https://via.placeholder.com/50' }} // Placeholder profile picture
+        style={styles.profilePicture} 
+      />
       <View style={styles.chatDetails}>
         <Text style={styles.chatName}>{item.name}</Text>
         <Text style={styles.chatLastMessage}>{item.lastMessage}</Text>
@@ -61,28 +65,41 @@ export default function ChatList({
 const styles = StyleSheet.create({
   chatList: {
     padding: 16,
+    backgroundColor: '#f0fdf4', // Lighter green background
   },
   chatItem: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: 16,
-    backgroundColor: '#fff',
+    alignItems: 'center',
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: '#e5e7eb', // Light gray divider
+    backgroundColor: '#ffffff', // White background for chat items (text bubble)
+    borderRadius: 8, // Slightly rounded corners
+    marginBottom: 16, // Increased space between chat items
+  },
+  profilePicture: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 12,
+    borderWidth: 2,
+    borderColor: '#10b981', // Green border for profile pictures
   },
   chatDetails: {
     flex: 1,
   },
   chatName: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#065f46', // Dark green text for chat names
   },
   chatLastMessage: {
     fontSize: 14,
-    color: '#666',
+    color: '#047857', // Medium green text
+    marginTop: 2,
   },
   chatTimestamp: {
     fontSize: 12,
-    color: '#999',
+    color: '#064e3b', // Deep green text
   },
 });

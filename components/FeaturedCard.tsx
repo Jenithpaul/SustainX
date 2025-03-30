@@ -8,6 +8,7 @@ interface FeaturedCardProps {
   title: string;
   description: string;
   isLiked: boolean;
+  negotiable?: boolean;
   onLikeToggle: () => void;
   onPress?: () => void;
 }
@@ -18,6 +19,7 @@ const FeaturedCard: React.FC<FeaturedCardProps> = ({
   title, 
   description, 
   isLiked,
+  negotiable,
   onLikeToggle,
   onPress 
 }) => {
@@ -50,6 +52,11 @@ const FeaturedCard: React.FC<FeaturedCardProps> = ({
           <Text style={styles.price}>
             {price}
           </Text>
+          {negotiable && (
+            <View style={styles.negotiableBadge}>
+              <Text style={styles.negotiableText}>Negotiable</Text>
+            </View>
+          )}
           <TouchableOpacity onPress={onLikeToggle} hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
             <FontAwesome name={isLiked ? "heart" : "heart-o"} size={20} color={isLiked ? "#F44336" : "#666"} />
           </TouchableOpacity>
@@ -129,6 +136,17 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     color: "#4CAF50",
+  },
+  negotiableBadge: {
+    backgroundColor: '#E3F2FD',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  negotiableText: {
+    fontSize: 10,
+    color: '#2196F3',
+    fontWeight: '500',
   },
   title: {
     fontSize: 16,

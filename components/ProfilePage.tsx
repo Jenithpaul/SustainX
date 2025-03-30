@@ -1,19 +1,20 @@
-import React, { useState, useEffect } from 'react';
+// ProfilePage.tsx
+import React, { useState } from "react";
 import {
   View,
   Text,
-  StyleSheet,
   Image,
   TouchableOpacity,
   ScrollView,
   Alert,
   Platform,
   TextInput,
-} from 'react-native';
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useProfileStyles } from "../ui/ProfilePageStyle";
 import { useRouter } from "expo-router";
-import * as ImagePicker from 'expo-image-picker';
-import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from "expo-image-picker";
 
 interface ProfileOption {
   id: string;
@@ -30,148 +31,123 @@ interface UserProfile {
   imageUrl: string;
 }
 
-interface ProfilePageProps {
-  previousScreen?: string;
-  onClose?: () => void; // Add an onClose prop for direct usage in tabs
-}
-
-const ProfilePage: React.FC<ProfilePageProps> = ({ previousScreen, onClose }) => {
+const ProfilePage: React.FC = () => {
   const router = useRouter();
-  
-  // State for user profile data
+  const styles = useProfileStyles();
+
   const [profile, setProfile] = useState<UserProfile>({
     name: "Sarah Johnson",
     role: "Environmental Science Major",
     score: 850,
-    imageUrl: "https://via.placeholder.com/80"
+    imageUrl: "https://via.placeholder.com/80",
   });
-
   const [isEditingName, setIsEditingName] = useState(false);
   const [newName, setNewName] = useState(profile.name);
 
-  // Profile options with appropriate icons and colors
   const profileOptions: ProfileOption[] = [
     {
-      id: 'certificates',
-      icon: 'trophy-outline',
-      label: 'Certificates',
-      color: '#e6efff',
-      iconColor: '#4361ee'
+      id: "certificates",
+      icon: "trophy-outline",
+      label: "Certificates",
+      color: "#e6efff",
+      iconColor: "#4361ee",
     },
     {
-      id: 'feedback',
-      icon: 'chatbubble-outline',
-      label: 'Feedback Form',
-      color: '#f3e8fa',
-      iconColor: '#7209b7'
+      id: "feedback",
+      icon: "chatbubble-outline",
+      label: "Feedback Form",
+      color: "#f3e8fa",
+      iconColor: "#7209b7",
     },
     {
-      id: 'settings',
-      icon: 'settings-outline',
-      label: 'Settings',
-      color: '#e9ecef',
-      iconColor: '#4a4e69'
+      id: "settings",
+      icon: "settings-outline",
+      label: "Settings",
+      color: "#e9ecef",
+      iconColor: "#4a4e69",
     },
     {
-      id: 'help',
-      icon: 'headset-outline',
-      label: 'Help & Support',
-      color: '#fce8ea',
-      iconColor: '#e63946'
+      id: "purchase",
+      icon: "bag-outline",
+      label: "Purchase History",
+      color: "#fdf6ec",
+      iconColor: "#e09f3e",
     },
     {
-      id: 'password',
-      icon: 'lock-closed-outline',
-      label: 'Change Password',
-      color: '#fff8e6',
-      iconColor: '#ffd166'
-    }
+      id: "help",
+      icon: "headset-outline",
+      label: "Help & Support",
+      color: "#fce8ea",
+      iconColor: "#e63946",
+    },
+    {
+      id: "password",
+      icon: "lock-closed-outline",
+      label: "Change Password",
+      color: "#fff8e6",
+      iconColor: "#ffd166",
+    },
   ];
 
-  // Handle close with proper navigation
-  const handleClose = () => {
-    // If onClose prop is provided, use it (when component is used as a modal)
-    if (onClose) {
-      onClose();
-      return;
-    }
-    
-    // Use the previousScreen prop to navigate back to the correct tab
-    // This assumes previousScreen is properly set when navigating to the profile
-    if (previousScreen && ['Home', 'Marketplace', 'Knowledge'].includes(previousScreen)) {
-      router.replace(`/(tabs)/${previousScreen}`);
+  // Navigate back to the previous tab stored in AsyncStorage.
+  const handleBackPress = async () => {
+    const previousTab = await AsyncStorage.getItem("previousTab");
+    if (previousTab) {
+      await AsyncStorage.removeItem("previousTab");
+      router.replace(`/${previousTab}`);
     } else {
-      // If no valid previousScreen, default to Home
-      router.replace("/(tabs)/Home");
+      router.back();
     }
   };
 
-  // Navigate to the selected option page
+  // Handle profile option navigation
   const handleOptionClick = (optionId: string) => {
     console.log(`${optionId} option clicked`);
-    router.push(`/${optionId}`);
+    router.push(optionId);
   };
 
-  // Handle logout functionality
+  // Logout functionality
   const handleLogout = async () => {
-    Alert.alert(
-      "Logout",
-      "Are you sure you want to logout?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel"
-        },
-        {
-          text: "Logout",
-          onPress: async () => {
-            try {
-              // Clear authentication state
-              await AsyncStorage.removeItem('authToken');
-              // Navigate to login screen
-              router.replace('/(auth)/Login');
-            } catch (error) {
-              console.error("Error during logout: ", error);
-              Alert.alert("Error", "An error occurred during logout. Please try again.");
-            }
+    Alert.alert("Logout", "Are you sure you want to logout?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Logout",
+        onPress: async () => {
+          try {
+            await AsyncStorage.removeItem("authToken");
+            router.replace("/(auth)/Login");
+          } catch (error) {
+            console.error("Error during logout:", error);
+            Alert.alert("Error", "An error occurred during logout. Please try again.");
           }
-        }
-      ]
-    );
+        },
+      },
+    ]);
   };
 
-  // Handle profile image upload
+  // Profile image change functionality
   const handleImageChange = async () => {
-    if (Platform.OS !== 'web') {
+    if (Platform.OS !== "web") {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission needed', 'Please grant permission to access your photos');
+      if (status !== "granted") {
+        Alert.alert("Permission needed", "Please grant permission to access your photos");
         return;
       }
     }
-
-    let result = await ImagePicker.launchImageLibraryAsync({
+    const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.7,
     });
-
     if (!result.canceled && result.assets && result.assets.length > 0) {
       const selectedAsset = result.assets[0];
       setProfile({ ...profile, imageUrl: selectedAsset.uri });
-      
-      // Save profile image to AsyncStorage so it can be used in the header
-      try {
-        await AsyncStorage.setItem('userProfileImage', selectedAsset.uri);
-      } catch (error) {
-        console.error("Error saving profile image to storage:", error);
-      }
-      
       Alert.alert("Success", "Profile picture updated successfully!");
     }
   };
 
+  // Handle name editing
   const handleNameEdit = () => {
     setProfile({ ...profile, name: newName });
     setIsEditingName(false);
@@ -179,38 +155,28 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ previousScreen, onClose }) =>
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.scrollContainer}>
-      {/* Header with X mark on the right */}
+      {/* Custom Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Profile</Text>
-        <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-          <Ionicons name="close" size={24} color="#000" />
+        <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
+          <Ionicons name="chevron-back" size={24} color="#000" />
         </TouchableOpacity>
+        <Text style={styles.headerTitle}>Profile</Text>
       </View>
 
-      {/* Profile Info */}
+      {/* Profile Info Section */}
       <View style={styles.profileSection}>
         <View style={styles.profileImageContainer}>
           <View style={styles.profileImageBg}>
-            <Image
-              source={{ uri: profile.imageUrl }}
-              style={styles.profileImage}
-            />
+            <Image source={{ uri: profile.imageUrl }} style={styles.profileImage} />
           </View>
-          <TouchableOpacity 
-            style={styles.cameraButton} 
-            onPress={handleImageChange}
-          >
+          <TouchableOpacity style={styles.cameraButton} onPress={handleImageChange}>
             <Ionicons name="camera" size={14} color="#fff" />
           </TouchableOpacity>
         </View>
-        
+
         {isEditingName ? (
           <View style={styles.nameEditContainer}>
-            <TextInput
-              style={styles.nameInput}
-              value={newName}
-              onChangeText={setNewName}
-            />
+            <TextInput style={styles.nameInput} value={newName} onChangeText={setNewName} />
             <TouchableOpacity onPress={handleNameEdit} style={styles.saveButton}>
               <Ionicons name="checkmark" size={20} color="#fff" />
             </TouchableOpacity>
@@ -223,9 +189,8 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ previousScreen, onClose }) =>
             </TouchableOpacity>
           </View>
         )}
-        
+
         <Text style={styles.userRole}>{profile.role}</Text>
-        
         <View style={styles.scoreContainer}>
           <Text style={styles.scoreText}>Sustainability Score: {profile.score}</Text>
         </View>
@@ -234,11 +199,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ previousScreen, onClose }) =>
       {/* Options List */}
       <View style={styles.optionsContainer}>
         {profileOptions.map((option) => (
-          <TouchableOpacity
-            key={option.id}
-            style={styles.optionButton}
-            onPress={() => handleOptionClick(option.id)}
-          >
+          <TouchableOpacity key={option.id} style={styles.optionButton} onPress={() => handleOptionClick(option.id)}>
             <View style={[styles.optionIconContainer, { backgroundColor: option.color }]}>
               <Ionicons name={option.icon as any} size={20} color={option.iconColor} />
             </View>
@@ -258,163 +219,5 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ previousScreen, onClose }) =>
     </ScrollView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: 'white',
-  },
-  scrollContainer: {
-    flexGrow: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eaeaea',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '500',
-  },
-  closeButton: {
-    padding: 8,
-  },
-  profileSection: {
-    alignItems: 'center',
-    paddingVertical: 24,
-    paddingHorizontal: 16,
-  },
-  profileImageContainer: {
-    position: 'relative',
-    width: 96,
-    height: 96,
-  },
-  profileImageBg: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: '#f0f0f0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    overflow: 'hidden',
-  },
-  profileImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    borderWidth: 2,
-    borderColor: 'white',
-  },
-  cameraButton: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: '#4ade80',
-    padding: 6,
-    borderRadius: 15,
-    borderWidth: 2,
-    borderColor: 'white',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  nameContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  userName: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  editButton: {
-    marginLeft: 8,
-  },
-  nameEditContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  nameInput: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    padding: 8,
-    borderRadius: 8,
-    fontSize: 16,
-    marginRight: 8,
-  },
-  saveButton: {
-    backgroundColor: '#4CAF50',
-    padding: 8,
-    borderRadius: 8,
-  },
-  userRole: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
-    marginBottom: 12,
-  },
-  scoreContainer: {
-    backgroundColor: '#ecfdf5',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 24,
-    marginTop: 12,
-  },
-  scoreText: {
-    color: '#047857',
-    fontWeight: '500',
-  },
-  optionsContainer: {
-    paddingHorizontal: 16,
-  },
-  optionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#eaeaea',
-  },
-  optionIconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  optionLabel: {
-    flex: 1,
-    fontSize: 16,
-  },
-  logoutContainer: {
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#eaeaea',
-    marginTop: 8,
-  },
-  logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 24,
-    backgroundColor: '#fef2f2',
-    borderRadius: 24,
-  },
-  logoutIcon: {
-    marginRight: 8,
-  },
-  logoutText: {
-    color: '#ef4444',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-});
 
 export default ProfilePage;
