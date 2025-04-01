@@ -13,7 +13,7 @@ import { useRouter } from "expo-router";
 import { useKnowledgeStyles } from "../../ui/KnowledgeStyle";
 import Header from "../../components/Header";
 
-export default function KnowledgeCentre() {
+export default function KnowledgeCentre({ previousScreen = null }) {
   const navigation = useNavigation();
   const router = useRouter();
   const styles = useKnowledgeStyles();
@@ -36,7 +36,7 @@ export default function KnowledgeCentre() {
   };
 
   const handleViewAllFeatured = () => {
-    navigation.navigate("Featured" as never);
+    router.push("/featured");
   };
 
   const handleStartLearning = () => {
@@ -44,15 +44,18 @@ export default function KnowledgeCentre() {
   };
 
   const handleCategoryClick = (category: string) => {
-    navigation.navigate(category.charAt(0).toUpperCase() + category.slice(1) as never);
+    router.push(`/${category}`);
   };
 
   const handleViewAllMagazines = () => {
-    navigation.navigate("Magazines" as never);
+    router.push("/magazines");
   };
 
   const handleMagazineClick = (id: string) => {
-    // navigation.navigate('MagazineDetail' as never, { id });
+    router.push({
+      pathname: "/magazine-detail",
+      params: { id }
+    });
   };
 
   const handleTabChange = (tab: string) => {
@@ -67,6 +70,14 @@ export default function KnowledgeCentre() {
       pathname: "/profile",
       params: { previousScreen: "knowledge" }
     });
+  };
+
+  const handleBackNavigation = () => {
+    if (previousScreen) {
+      router.replace(`/(tabs)/${previousScreen.toLowerCase()}`);
+    } else {
+      navigation.goBack();
+    }
   };
 
   const loadData = async () => {

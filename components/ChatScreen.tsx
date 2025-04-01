@@ -3,7 +3,8 @@ import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Keyboard
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RouteProp } from '@react-navigation/native';
-import * as ImagePicker from 'expo-image-picker'; // Import ImagePicker
+import * as ImagePicker from 'expo-image-picker';
+import { useTheme } from '../ui/ThemeProvider'; // Import the useTheme hook
 
 interface Message {
   id: string;
@@ -25,6 +26,7 @@ export default function ChatScreen({
   const { itemId, itemTitle, recipientId, recipientName } = route.params;
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
+  const theme = useTheme(); // Access the current theme
 
   useEffect(() => {
     loadMessages();
@@ -124,15 +126,22 @@ export default function ChatScreen({
     <View
       style={[
         styles.messageBubble,
-        item.sender === 'user' ? styles.userMessage : styles.otherMessage,
+        item.sender === 'user' 
+          ? [styles.userMessage, { backgroundColor: theme.primary }] 
+          : [styles.otherMessage, { backgroundColor: theme.backgroundPrimary }],
       ]}
     >
       {item.image ? (
         <Image source={{ uri: item.image }} style={styles.messageImage} />
       ) : (
-        <Text style={styles.messageText}>{item.text}</Text>
+        <Text style={[
+          styles.messageText, 
+          { color: item.sender === 'user' ? theme.textOnPrimary : theme.textPrimary }
+        ]}>
+          {item.text}
+        </Text>
       )}
-      <Text style={styles.timestamp}>
+      <Text style={[styles.timestamp, { color: item.sender === 'user' ? theme.textOnPrimary : theme.textSecondary }]}>
         {new Date(item.timestamp).toLocaleTimeString([], {
           hour: '2-digit',
           minute: '2-digit',
@@ -143,19 +152,19 @@ export default function ChatScreen({
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: theme.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={100}
     >
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: theme.backgroundPrimary, borderBottomColor: theme.border }]}>
         {onBack && (
           <TouchableOpacity onPress={onBack} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#333" />
+            <Ionicons name="arrow-back" size={24} color={theme.textPrimary} />
           </TouchableOpacity>
         )}
         <View>
-          <Text style={styles.headerTitle}>{recipientName}</Text>
-          <Text style={styles.itemTitle}>{itemTitle}</Text>
+          <Text style={[styles.headerTitle, { color: theme.textPrimary }]}>{recipientName}</Text>
+          <Text style={[styles.itemTitle, { color: theme.textSecondary }]}>{itemTitle}</Text>
         </View>
       </View>
 
@@ -163,23 +172,27 @@ export default function ChatScreen({
         data={messages}
         renderItem={renderMessage}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.messagesList}
+        contentContainerStyle={[styles.messagesList, { backgroundColor: theme.background }]}
         inverted={false}
       />
 
-      <View style={styles.inputContainer}>
-        <TouchableOpacity onPress={pickImage} style={styles.attachButton}>
-          <Ionicons name="add" size={24} color="#000" />
+      <View style={[styles.inputContainer, { backgroundColor: theme.backgroundPrimary, borderTopColor: theme.border }]}>
+        <TouchableOpacity style={styles.attachButton} onPress={pickImage}>
+          <Ionicons name="image" size={24} color={theme.primary} />
         </TouchableOpacity>
         <TextInput
-          style={styles.input}
+          style={[styles.input, { backgroundColor: theme.background, color: theme.textPrimary, borderColor: theme.border }]}
           value={inputText}
           onChangeText={setInputText}
           placeholder="Type a message..."
-          multiline
+          placeholderTextColor={theme.textSecondary}
         />
-        <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
-          <Ionicons name="send" size={24} color="#fff" />
+        <TouchableOpacity 
+          style={[styles.sendButton, { backgroundColor: inputText.trim() ? theme.primary : theme.backgroundSecondary }]}
+          onPress={sendMessage}
+          disabled={inputText.trim() === ''}
+        >
+          <Ionicons name="send" size={20} color={inputText.trim() ? theme.textOnPrimary : theme.textSecondary} />
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -189,13 +202,10 @@ export default function ChatScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
   },
   header: {
     padding: 16,
-    backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -205,7 +215,6 @@ const styles = StyleSheet.create({
   },
   itemTitle: {
     fontSize: 14,
-    color: '#666',
   },
   messagesList: {
     padding: 16,
@@ -219,31 +228,25 @@ const styles = StyleSheet.create({
   },
   userMessage: {
     alignSelf: 'flex-end',
-    backgroundColor: '#DCF8C6',
   },
   otherMessage: {
     alignSelf: 'flex-start',
-    backgroundColor: '#fff',
   },
   messageText: {
     fontSize: 16,
   },
   timestamp: {
     fontSize: 12,
-    color: '#999',
     alignSelf: 'flex-end',
     marginTop: 4,
   },
   inputContainer: {
     flexDirection: 'row',
     padding: 8,
-    backgroundColor: '#fff',
     borderTopWidth: 1,
-    borderTopColor: '#eee',
   },
   input: {
     flex: 1,
-    backgroundColor: '#f0f0f0',
     borderRadius: 24,
     paddingHorizontal: 16,
     paddingVertical: 8,
@@ -253,7 +256,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#4CAF50',
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 8,
@@ -262,7 +264,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#f0f0f0',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 8,
