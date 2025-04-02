@@ -23,6 +23,7 @@ import * as ImagePicker from "expo-image-picker";
 
 interface UploadProps {
   onClose: () => void;
+  initialMethod?: "sell" | "swap" | "donate";
 }
 
 /**
@@ -31,7 +32,7 @@ interface UploadProps {
  * - Uses a styling theme inspired by the Knowledge page.
  * - Calls the onClose callback when the user taps the back arrow or after a successful listing.
  */
-const Upload: React.FC<UploadProps> = ({ onClose }) => {
+const Upload: React.FC<UploadProps> = ({ onClose, initialMethod = "sell" }) => {
   const router = useRouter();
 
   // Component state
@@ -42,7 +43,7 @@ const Upload: React.FC<UploadProps> = ({ onClose }) => {
   const [negotiable, setNegotiable] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [imageUrl, setImageUrl] = useState("https://via.placeholder.com/150");
-  const [uploadMethod, setUploadMethod] = useState<"sell" | "swap" | "donate">("sell");
+  const [uploadMethod, setUploadMethod] = useState<"sell" | "swap" | "donate">(initialMethod);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
 
   /**

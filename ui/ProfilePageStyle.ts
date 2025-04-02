@@ -4,7 +4,7 @@ import { useTheme } from "../contexts/ThemeContext"; // Adjust path if needed
 export const useProfileStyles = () => {
   const theme = useTheme();
 
-  return StyleSheet.create({
+  return {
     container: {
       flex: 1,
       backgroundColor: theme.backgroundPrimary,
@@ -150,13 +150,22 @@ export const useProfileStyles = () => {
       alignItems: "center",
       paddingVertical: 8,
       paddingHorizontal: 24,
-      backgroundColor: theme.errorBackground,
+      backgroundColor: theme.errorBackground || "#FFEBEE", // Fallback color in case theme doesn't have errorBackground
       borderRadius: 24,
     },
     logoutText: {
-      color: theme.error,
+      color: theme.error || "#D32F2F", // Fallback color in case theme doesn't have error
       fontSize: 16,
       fontWeight: "500",
     },
-  });
+    // Adding missing theme properties used in ProfilePage.tsx
+    primary: theme.primary,
+    textSecondary: theme.textSecondary,
+    border: theme.border,
+    backgroundPrimary: theme.backgroundPrimary,
+    backgroundSecondary: theme.backgroundSecondary,
+    inputBackground: theme.inputBackground,
+    error: theme.error || "#D32F2F", // Fallback color
+    errorBackground: theme.errorBackground || "#FFEBEE", // Fallback color
+  };
 };

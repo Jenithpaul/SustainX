@@ -146,9 +146,14 @@ export default function Marketplace() {
     loadMarketplaceData();
   }, []);
 
-  // Automatically show the upload view if a valid method parameter is provided
+  // Debug the method parameter and show upload view if valid
   useEffect(() => {
-    if (method === "sell" || method === "swap" || method === "donate") {
+    console.log("Method parameter received:", method);
+    
+    // Make more robust by converting to lowercase and checking
+    const methodValue = method?.toLowerCase();
+    if (methodValue === "sell" || methodValue === "swap" || methodValue === "donate") {
+      console.log("Setting showUpload to true for method:", methodValue);
       setShowUpload(true);
     }
   }, [method]);
@@ -248,8 +253,11 @@ export default function Marketplace() {
       {selectedItem ? (
         <ItemDetails item={selectedItem} onStartChat={() => startChat(selectedItem)} onClose={closeItemDetails} />
       ) : showUpload ? (
-        // Render the Upload component with onClose callback so that it closes properly
-        <Upload onClose={toggleUploadView} />
+        // Render the Upload component with onClose callback and initial method
+        <Upload 
+          onClose={toggleUploadView} 
+          initialMethod={(method?.toLowerCase() as "sell" | "swap" | "donate") || "sell"} 
+        />
       ) : showChat && chatDetails ? (
         <ChatScreen route={{ key: "chat", name: "params", params: chatDetails }} />
       ) : showProfile ? (

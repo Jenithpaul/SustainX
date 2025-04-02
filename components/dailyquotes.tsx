@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Ionicons } from "@expo/vector-icons";
 
 // Array of 365 quotes for better tomorrow
 const quotes = [
@@ -407,89 +408,104 @@ const quotes = [
   
 ];
 
-interface DailyQuoteProps {
-  style?: object;
-}
-
-const DailyQuote: React.FC<DailyQuoteProps> = ({ style }) => {
+const DailyQuote = () => {
   const [quote, setQuote] = useState({ text: "", author: "" });
 
   useEffect(() => {
-    const fetchDailyQuote = async () => {
+    const getQuoteForToday = async () => {
       try {
-        // Get the current date in format YYYY-MM-DD
-        const today = new Date().toISOString().split('T')[0];
+        // Get the current date string
+        const today = new Date().toDateString();
         
-        // Check if we need to update the quote
-        const lastQuoteDate = await AsyncStorage.getItem('lastQuoteDate');
-        const storedQuote = await AsyncStorage.getItem('dailyQuote');
+        // Check if we already have a quote for today
+        const storedDate = await AsyncStorage.getItem("quoteDate");
         
-        if (lastQuoteDate !== today || !storedQuote) {
-          // Calculate which quote to show based on day of year
-          const now = new Date();
-          const start = new Date(now.getFullYear(), 0, 0);
-          const diff = now.getTime() - start.getTime();
-          const oneDay = 1000 * 60 * 60 * 24;
-          const dayOfYear = Math.floor(diff / oneDay);
+        if (storedDate !== today) {
+          // It's a new day, select a new quote
+          const randomIndex = Math.floor(Math.random() * quotes.length);
+          const todaysQuote = quotes[randomIndex];
           
-          // Get quote for today (modulo to handle leap years)
-          const quoteIndex = dayOfYear % quotes.length;
-          const todayQuote = quotes[quoteIndex];
+          // Save the new quote and today's date
+          await AsyncStorage.setItem("currentQuote", JSON.stringify(todaysQuote));
+          await AsyncStorage.setItem("quoteDate", today);
           
-          // Save the new quote and date
-          await AsyncStorage.setItem('dailyQuote', JSON.stringify(todayQuote));
-          await AsyncStorage.setItem('lastQuoteDate', today);
-          
-          setQuote(todayQuote);
-        } else if (storedQuote) {
-          // Use the stored quote if it's still the same day
-          setQuote(JSON.parse(storedQuote));
+          setQuote(todaysQuote);
+        } else {
+          // Get the stored quote for today
+          const storedQuote = await AsyncStorage.getItem("currentQuote");
+          if (storedQuote) {
+            setQuote(JSON.parse(storedQuote));
+          } else {
+            // Fallback if stored quote not found
+            const randomIndex = Math.floor(Math.random() * quotes.length);
+            setQuote(quotes[randomIndex]);
+          }
         }
       } catch (error) {
-        console.error('Error fetching daily quote:', error);
-        // Fallback to a random quote if there's an error
+        console.error("Error getting daily quote:", error);
+        // Fallback to a random quote if error occurs
         const randomIndex = Math.floor(Math.random() * quotes.length);
         setQuote(quotes[randomIndex]);
       }
     };
 
-    fetchDailyQuote();
+    getQuoteForToday();
   }, []);
 
-  if (!quote.text) return null;
+  if (!quote.text) {
+    return null; // Don't render anything if the quote isn't loaded yet
+  }
 
   return (
-    <View style={[styles.quoteContainer, style]}>
-      <Text style={styles.quoteText}>"{quote.text}"</Text>
-      <Text style={styles.quoteAuthor}>— {quote.author}</Text>
+    <View style={styles.quoteContainer}>
+      <View style={styles.quoteIconContainer}>
+        <Ionicons name="chatbubble-ellipses" size={24} color="#4CAF50" />
+      </View>
+      <View style={styles.quoteTextContainer}>
+        <Text style={styles.quoteText}>"{quote.text}"</Text>
+        <Text style={styles.quoteAuthor}>— {quote.author}</Text>
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   quoteContainer: {
-    backgroundColor: '#F5F5F5',
-    borderRadius: 12,
-    padding: 16,
-    marginVertical: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    padding: 20,
+    flexDirection: "row",
+    marginBottom: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
     elevation: 3,
+  },
+  quoteIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#e0f7e9",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 16,
+  },
+  quoteTextContainer: {
+    flex: 1,
   },
   quoteText: {
     fontSize: 16,
-    fontStyle: 'italic',
-    color: '#333',
+    fontStyle: "italic",
+    color: "#333333",
     marginBottom: 8,
-    lineHeight: 24,
+    lineHeight: 22,
   },
   quoteAuthor: {
     fontSize: 14,
-    color: '#666',
-    textAlign: 'right',
-    fontWeight: '500',
+    fontWeight: "600",
+    color: "#4CAF50",
+    textAlign: "right",
   },
 });
 

@@ -4,7 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RouteProp } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
-import { useTheme } from '../ui/ThemeProvider'; // Import the useTheme hook
+import { useTheme } from '../contexts/ThemeContext'; // Update theme import path
+import { router } from 'expo-router'; // Import the router
 
 interface Message {
   id: string;
@@ -122,6 +123,16 @@ export default function ChatScreen({
     }
   };
 
+  const handleProfilePress = () => {
+    router.push({
+      pathname: "/(tabs)/Marketplace",
+      params: { 
+        selectedItem: itemId,
+        method: 'viewItem'
+      }
+    });
+  };
+
   const renderMessage = ({ item }: { item: Message }) => (
     <View
       style={[
@@ -162,10 +173,20 @@ export default function ChatScreen({
             <Ionicons name="arrow-back" size={24} color={theme.textPrimary} />
           </TouchableOpacity>
         )}
-        <View>
-          <Text style={[styles.headerTitle, { color: theme.textPrimary }]}>{recipientName}</Text>
-          <Text style={[styles.itemTitle, { color: theme.textSecondary }]}>{itemTitle}</Text>
-        </View>
+        <TouchableOpacity 
+          onPress={handleProfilePress}
+          style={styles.headerContent}
+          activeOpacity={0.7}
+        >
+          <Image 
+            source={{ uri: `https://ui-avatars.com/api/?name=${recipientName}` }}
+            style={styles.profileImage}
+          />
+          <View>
+            <Text style={[styles.headerTitle, { color: theme.textPrimary }]}>{recipientName}</Text>
+            <Text style={[styles.itemTitle, { color: theme.textSecondary }]}>{itemTitle}</Text>
+          </View>
+        </TouchableOpacity>
       </View>
 
       <FlatList
@@ -277,5 +298,16 @@ const styles = StyleSheet.create({
   backButton: {
     marginRight: 12,
     padding: 4,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  profileImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 12,
   },
 });

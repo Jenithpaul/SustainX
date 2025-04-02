@@ -15,11 +15,20 @@ interface ChatDetails {
   recipientName: string;
 }
 
+interface Chat {
+  id: string;
+  name: string;
+  lastMessage: string;
+  timestamp: string;
+  itemId: string;
+  itemTitle: string;
+}
+
 export default function Messages() {
   const { recipientId, itemId } = useLocalSearchParams<{ recipientId?: string; itemId?: string }>();
   const [isLoading, setIsLoading] = useState(true);
   const [activeChatDetails, setActiveChatDetails] = useState<ChatDetails | null>(null);
-  const [chats, setChats] = useState<any[]>([]);
+  const [chats, setChats] = useState<Chat[]>([]);
 
   const theme = useTheme(); // Access the current theme
 
@@ -29,7 +38,7 @@ export default function Messages() {
       setIsLoading(true);
       const keys = await AsyncStorage.getAllKeys();
       const chatKeys = keys.filter((key) => key.startsWith('chat_'));
-      const chatList = [];
+      const chatList: Chat[] = [];
 
       for (const chatKey of chatKeys) {
         const chatData = await AsyncStorage.getItem(chatKey);
@@ -66,7 +75,10 @@ export default function Messages() {
         }
       }
 
-      setChats(chatList);
+      // Sort chats before setting state
+      setChats(chatList.sort((a, b) => 
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      ));
 
       if (recipientId && itemId) {
         const chat = chatList.find((c) => c.id === recipientId && c.itemId === itemId);
@@ -92,8 +104,13 @@ export default function Messages() {
     }, [recipientId, itemId])
   );
 
-  const handleChatSelect = (chatDetails: ChatDetails) => {
-    setActiveChatDetails(chatDetails);
+  const handleChatSelect = (chat: Chat) => {
+    setActiveChatDetails({
+      recipientId: chat.id,
+      itemId: chat.itemId,
+      recipientName: chat.name,
+      itemTitle: chat.itemTitle,
+    });
   };
 
   if (isLoading) {

@@ -51,6 +51,9 @@ export type ThemeType = {
       active: string;
     };
   };
+  // Adding missing properties used in ProfilePageStyle.ts
+  error: string;                  // For error text/icons
+  errorBackground: string;        // Background for error states
 };
 
 /**
@@ -103,6 +106,9 @@ export const lightTheme: ThemeType = {
       active: "#4CAF50",
     },
   },
+  // Adding missing properties
+  error: "#D32F2F",               // Red color for errors
+  errorBackground: "#FFEBEE",     // Light red background for error states
 };
 
 /**
@@ -167,6 +173,9 @@ export const darkTheme: ThemeType = {
       active: "#00FF00",
     },
   },
+  // Adding missing properties
+  error: "#FF5252",                // Bright red for error in dark mode
+  errorBackground: "#331111",      // Dark red background for error states
 };
 
 // Create the ThemeContext with default values (lightTheme by default)
@@ -196,6 +205,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     setTheme(theme === lightTheme ? darkTheme : lightTheme);
   };
 
+  // The return statement would go here but was intentionally omitted as requested
   
 };
 
