@@ -1,3 +1,4 @@
+// Marketplace.tsx
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -7,7 +8,6 @@ import {
   Image,
   ActivityIndicator,
   RefreshControl,
-  Alert
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import FeaturedCard from "../../components/FeaturedCard";
@@ -21,9 +21,11 @@ import ItemDetails from "../../components/ItemDetails";
 import { useLocalSearchParams, router } from "expo-router";
 import { useMarketplaceStyles } from "../../ui/MarketplaceStyles";
 import Header from "../../components/Header";
+import ImageViewing from "react-native-image-viewing";
 
 interface Item {
   image: string;
+  images?: string[]; // New: Array of image URIs
   price: string;
   title: string;
   description: string;
@@ -57,11 +59,20 @@ export default function Marketplace() {
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [items, setItems] = useState<Item[]>([]);
 
+  // New: Image viewer state for expanded/swipe view
+  const [isImageViewerVisible, setIsImageViewerVisible] = useState(false);
+  const [currentImages, setCurrentImages] = useState<{ uri: string }[]>([]);
+  const [currentViewingItem, setCurrentViewingItem] = useState<Item | null>(null);
+
   // Default items if no marketplace items are stored
   const defaultItems: Item[] = [
     {
       id: "1",
-      image: "https://via.placeholder.com/150",
+      image: "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+      images: [
+        "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+        "https://images.unsplash.com/photo-1603302576837-37561b2e2302?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+      ],
       price: "₹299",
       title: "Refurbished Laptop",
       description: "Like new condition, 1 year warranty",
@@ -72,7 +83,8 @@ export default function Marketplace() {
     },
     {
       id: "2",
-      image: "https://via.placeholder.com/150",
+      image: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+      images: ["https://images.unsplash.com/photo-1544947950-fa07a98d237f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"],
       price: "₹45",
       title: "Engineering Books Set",
       description: "Perfect condition, 2nd year",
@@ -83,8 +95,8 @@ export default function Marketplace() {
     },
     {
       id: "3",
-      image:
-        "https://tse2.mm.bing.net/th?id=OIP.uLgbHigFVo5rfNajwAhRXwHaE5&pid=Api&P=0&h=180",
+      image: "https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+      images: ["https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"],
       price: "₹99",
       title: "Mechanical Keyboard",
       description: "Brand new, RGB lighting",
@@ -95,7 +107,8 @@ export default function Marketplace() {
     },
     {
       id: "4",
-      image: "https://via.placeholder.com/150",
+      image: "https://images.unsplash.com/photo-1564466809058-bf4114d55352?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+      images: ["https://images.unsplash.com/photo-1564466809058-bf4114d55352?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"],
       price: "₹199",
       title: "Student Calculator",
       description: "Scientific calculator, lightly used",
@@ -149,8 +162,6 @@ export default function Marketplace() {
   // Debug the method parameter and show upload view if valid
   useEffect(() => {
     console.log("Method parameter received:", method);
-    
-    // Make more robust by converting to lowercase and checking
     const methodValue = method?.toLowerCase();
     if (methodValue === "sell" || methodValue === "swap" || methodValue === "donate") {
       console.log("Setting showUpload to true for method:", methodValue);
@@ -192,28 +203,12 @@ export default function Marketplace() {
     await AsyncStorage.setItem("marketplaceItems", JSON.stringify(updatedItems));
   };
 
-  // Toggle the upload view
+  // Toggle the upload view and reload marketplace data when closing
   const toggleUploadView = () => {
     if (showUpload) {
-      // When closing the upload view, reload the marketplace data
       loadMarketplaceData();
     }
     setShowUpload(!showUpload);
-  };
-
-  // Open the chat screen with provided details
-  const openChatScreen = (chatDetails: {
-    itemId: string;
-    itemTitle: string;
-    recipientId: string;
-    recipientName: string;
-  }) => {
-    setChatDetails(chatDetails);
-    setShowChat(true);
-  };
-
-  const toggleProfileView = () => {
-    setShowProfile(!showProfile);
   };
 
   // Open item details view by setting the selected item
@@ -236,6 +231,23 @@ export default function Marketplace() {
     setSelectedItem(null);
   };
 
+  // Open image viewer modal when image is tapped in FeaturedCard.
+  // Use the item's 'images' array if available.
+  const openImageViewer = (item: Item) => {
+    try {
+      // Ensure images are in the correct format for the component
+      const imgs = item.images && item.images.length > 0 
+        ? item.images.map(uri => ({ uri })) 
+        : [{ uri: item.image }];
+      
+      setCurrentImages(imgs);
+      setCurrentViewingItem(item);
+      setIsImageViewerVisible(true);
+    } catch (error) {
+      console.error("Error opening image viewer:", error);
+    }
+  };
+
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -249,11 +261,13 @@ export default function Marketplace() {
   return (
     <View style={styles.container}>
       <Header currentTab="Marketplace" />
-      {/* Render ItemDetails if an item is selected */}
       {selectedItem ? (
-        <ItemDetails item={selectedItem} onStartChat={() => startChat(selectedItem)} onClose={closeItemDetails} />
+        <ItemDetails 
+          item={selectedItem} 
+          onStartChat={() => startChat(selectedItem)} 
+          onClose={closeItemDetails} 
+        />
       ) : showUpload ? (
-        // Render the Upload component with onClose callback and initial method
         <Upload 
           onClose={toggleUploadView} 
           initialMethod={(method?.toLowerCase() as "sell" | "swap" | "donate") || "sell"} 
@@ -261,7 +275,7 @@ export default function Marketplace() {
       ) : showChat && chatDetails ? (
         <ChatScreen route={{ key: "chat", name: "params", params: chatDetails }} />
       ) : showProfile ? (
-        <ProfilePage onClose={toggleProfileView} />
+        <ProfilePage onClose={() => setShowProfile(false)} />
       ) : (
         <>
           <SearchBar
@@ -277,7 +291,9 @@ export default function Marketplace() {
             <ScrollView
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.scrollContent}
-              refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#4CAF50"]} />}
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#4CAF50"]} />
+              }
             >
               {!showWishlist && (
                 <>
@@ -299,6 +315,7 @@ export default function Marketplace() {
                           negotiable={item.negotiable}
                           onLikeToggle={() => toggleLike(item.id!)}
                           onPress={() => openItemDetails(item)}
+                          onImagePress={() => openImageViewer(item)}
                         />
                       </View>
                     ))}
@@ -306,7 +323,9 @@ export default function Marketplace() {
                 </>
               )}
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>{showWishlist ? "Saved Items" : "All Items"}</Text>
+                <Text style={styles.sectionTitle}>
+                  {showWishlist ? "Saved Items" : "All Items"}
+                </Text>
                 {!showWishlist && (
                   <View style={styles.sortContainer}>
                     <Text style={styles.sortText}>Sort by:</Text>
@@ -329,6 +348,7 @@ export default function Marketplace() {
                       negotiable={item.negotiable}
                       onLikeToggle={() => toggleLike(item.id!)}
                       onPress={() => openItemDetails(item)}
+                      onImagePress={() => openImageViewer(item)}
                     />
                   </View>
                 ))}
@@ -337,7 +357,9 @@ export default function Marketplace() {
           ) : (
             <View style={styles.emptyStateContainer}>
               <Image source={{ uri: "https://via.placeholder.com/150" }} style={styles.emptyStateImage} />
-              <Text style={styles.emptyStateTitle}>{showWishlist ? "No liked items" : "No items found"}</Text>
+              <Text style={styles.emptyStateTitle}>
+                {showWishlist ? "No liked items" : "No items found"}
+              </Text>
               <Text style={styles.emptyStateText}>
                 {showWishlist
                   ? "Items you like will appear here. Start exploring the marketplace!"
@@ -352,10 +374,46 @@ export default function Marketplace() {
           )}
         </>
       )}
-      {/* Floating button to toggle the Upload view */}
       <TouchableOpacity style={styles.addButton} onPress={toggleUploadView}>
         <Ionicons name="add" size={30} color="#FFFFFF" />
       </TouchableOpacity>
-    </View>
+
+      {/* Modal for image viewing with multi-image swipe and caption footer */}
+      {isImageViewerVisible && currentImages.length > 0 && (
+        <ImageViewing
+          images={currentImages}
+          imageIndex={0}
+          visible={isImageViewerVisible}
+          onRequestClose={() => setIsImageViewerVisible(false)}
+          FooterComponent={({ imageIndex }) => 
+            currentViewingItem ? (
+              <View style={{ 
+                padding: 20, 
+                backgroundColor: "rgba(0,0,0,0.5)",
+                position: "absolute",
+                bottom: 0,
+                left: 0,
+                right: 0 
+              }}>
+                <Text style={{ 
+                  color: "#fff", 
+                  fontSize: 18, 
+                  fontWeight: "bold" 
+                }}>
+                  {currentViewingItem.title}
+                </Text>
+                <Text style={{ 
+                  color: "#fff", 
+                  fontSize: 14, 
+                  marginTop: 4 
+                }}>
+                  {currentViewingItem.description}
+                </Text>
+              </View>
+            ) : null
+          }
+        />
+      )}
+    </View> 
   );
 }

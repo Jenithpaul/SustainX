@@ -1,0 +1,138 @@
+import React, { useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { useThemeContext } from '../contexts/ThemeContext';
+
+export default function AddQuizScreen() {
+  const [quizTitle, setQuizTitle] = useState('');
+  const [questions, setQuestions] = useState([]);
+  const [currentQuestion, setCurrentQuestion] = useState('');
+  const [options, setOptions] = useState(['', '', '', '']);
+  const [correctOption, setCorrectOption] = useState(null); // Index of the correct option
+  const router = useRouter();
+  const { colors } = useThemeContext();
+
+  const handleAddQuestion = () => {
+    if (!currentQuestion || options.some((opt) => !opt) || correctOption === null) {
+      Alert.alert('Error', 'Please fill in all fields and select the correct option.');
+      return;
+    }
+
+    // Add the question to the list
+    setQuestions([
+      ...questions,
+      { question: currentQuestion, options, correctOption },
+    ]);
+
+    // Reset the fields for the next question
+    setCurrentQuestion('');
+    setOptions(['', '', '', '']);
+    setCorrectOption(null);
+  };
+
+  const handleSaveQuiz = () => {
+    if (!quizTitle.trim()) {
+      Alert.alert('Error', 'Quiz title cannot be empty.');
+      return;
+    }
+
+    if (questions.length === 0) {
+      Alert.alert('Error', 'Please add at least one question.');
+      return;
+    }
+
+    // Pass the new quiz data back to the main screen
+    router.push({
+      pathname: '/quizzes',
+      params: { newQuiz: { title: quizTitle, questions } },
+    });
+  };
+
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+      padding: 16,
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      padding: 8,
+      marginBottom: 8,
+      color: colors.text,
+    },
+    addButton: {
+      backgroundColor: colors.primary,
+      padding: 12,
+      borderRadius: 8,
+      alignItems: 'center',
+      marginVertical: 8,
+    },
+    addButtonText: {
+      color: '#fff',
+      fontWeight: '600',
+    },
+    optionButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    optionText: {
+      marginLeft: 8,
+      color: colors.text,
+    },
+    selectedOption: {
+      fontWeight: 'bold',
+      color: colors.primary,
+    },
+  });
+
+  return (
+    <View style={styles.container}>
+      <TextInput
+        style={styles.input}
+        placeholder="Quiz Title"
+        placeholderTextColor={colors.textSecondary}
+        value={quizTitle}
+        onChangeText={setQuizTitle}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Question"
+        placeholderTextColor={colors.textSecondary}
+        value={currentQuestion}
+        onChangeText={setCurrentQuestion}
+      />
+      {options.map((option, index) => (
+        <View key={index} style={styles.optionButton}>
+          <TouchableOpacity onPress={() => setCorrectOption(index)}>
+            <Ionicons
+              name={correctOption === index ? 'radio-button-on' : 'radio-button-off'}
+              size={24}
+              color={correctOption === index ? colors.primary : colors.textSecondary}
+            />
+          </TouchableOpacity>
+          <TextInput
+            style={[styles.input, { flex: 1 }]}
+            placeholder={`Option ${index + 1}`}
+            placeholderTextColor={colors.textSecondary}
+            value={option}
+            onChangeText={(text) => {
+              const newOptions = [...options];
+              newOptions[index] = text;
+              setOptions(newOptions);
+            }}
+          />
+        </View>
+      ))}
+      <TouchableOpacity style={styles.addButton} onPress={handleAddQuestion}>
+        <Text style={styles.addButtonText}>Add Question</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.addButton} onPress={handleSaveQuiz}>
+        <Text style={styles.addButtonText}>Save Quiz</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}

@@ -9,11 +9,8 @@ const MainLayout = () => {
   const { colors } = useThemeContext();
   
   return (
-    // <SafeAreaView style={{ 
-    //   flex: 1, 
-    //   backgroundColor: colors.backgroundSecondary,
-    //   paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
-    // }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
       <View style={{ 
         flex: 1, 
         backgroundColor: colors.background 
@@ -23,7 +20,7 @@ const MainLayout = () => {
         </View>
         <BottomNavbar />
       </View>
-    // </SafeAreaView>
+    </SafeAreaView>
   );
 };
 

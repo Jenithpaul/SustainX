@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
 import { FontAwesome } from '@expo/vector-icons';
+import { useTheme } from "../ui/ThemeProvider";
 
 interface FeaturedCardProps {
   image: string;
@@ -11,6 +12,7 @@ interface FeaturedCardProps {
   negotiable?: boolean;
   onLikeToggle: () => void;
   onPress?: () => void;
+  onImagePress?: () => void;
 }
 
 const FeaturedCard: React.FC<FeaturedCardProps> = ({ 
@@ -21,20 +23,48 @@ const FeaturedCard: React.FC<FeaturedCardProps> = ({
   isLiked,
   negotiable,
   onLikeToggle,
-  onPress 
+  onPress,
+  onImagePress
 }) => {
+  const theme = useTheme();
+  const [imageError, setImageError] = useState(false);
+  
+  // Fallback image URL - use a reliable placeholder service
+  const fallbackImage = "https://via.placeholder.com/300x200/cccccc/666666?text=No+Image";
+  
+  // Safe image press handler
+  const handleImagePress = () => {
+    try {
+      if (onImagePress) onImagePress();
+    } catch (error) {
+      console.error("Error handling image press:", error);
+    }
+  };
+  
   return (
     <TouchableOpacity 
-      style={styles.card}
+      style={[styles.card, { backgroundColor: theme.cardBackground, borderColor: theme.border }]}
       activeOpacity={0.9}
       onPress={onPress}
     >
       <View style={styles.imageContainer}>
-        <Image 
-          source={{ uri: image }} 
-          style={styles.image} 
-          resizeMode="cover"
-        />
+        {onImagePress ? (
+          <TouchableOpacity onPress={handleImagePress} activeOpacity={0.9}>
+            <Image 
+              source={{ uri: imageError ? fallbackImage : image }} 
+              style={styles.image} 
+              resizeMode="cover"
+              onError={() => setImageError(true)}
+            />
+          </TouchableOpacity>
+        ) : (
+          <Image 
+            source={{ uri: imageError ? fallbackImage : image }} 
+            style={styles.image} 
+            resizeMode="cover"
+            onError={() => setImageError(true)}
+          />
+        )}
         {price.includes("For Swap") && (
           <View style={[styles.badge, styles.swapBadge]}>
             <Text style={styles.badgeText}>Swap</Text>
@@ -47,23 +77,21 @@ const FeaturedCard: React.FC<FeaturedCardProps> = ({
         )}
       </View>
 
-      <View style={styles.contentContainer}>
+      <View style={[styles.contentContainer, { backgroundColor: "rgba(255,255,255,0.2)" }]}>
         <View style={styles.priceRow}>
-          <Text style={styles.price}>
-            {price}
-          </Text>
+          <Text style={[styles.price, { color: theme.primary }]}>{price}</Text>
           {negotiable && (
             <View style={styles.negotiableBadge}>
-              <Text style={styles.negotiableText}>Negotiable</Text>
+              <Text style={[styles.negotiableText, { color: theme.textSecondary }]}>Negotiable</Text>
             </View>
           )}
           <TouchableOpacity onPress={onLikeToggle} hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
-            <FontAwesome name={isLiked ? "heart" : "heart-o"} size={20} color={isLiked ? "#F44336" : "#666"} />
+            <FontAwesome name={isLiked ? "heart" : "heart-o"} size={20} color={isLiked ? "#F44336" : theme.textSecondary} />
           </TouchableOpacity>
         </View>
         
         <Text 
-          style={styles.title}
+          style={[styles.title, { color: theme.textPrimary }]}
           numberOfLines={1}
           ellipsizeMode="tail"
         >
@@ -71,7 +99,7 @@ const FeaturedCard: React.FC<FeaturedCardProps> = ({
         </Text>
         
         <Text 
-          style={styles.description}
+          style={[styles.description, { color: theme.textSecondary }]}
           numberOfLines={2}
           ellipsizeMode="tail"
         >
@@ -84,7 +112,6 @@ const FeaturedCard: React.FC<FeaturedCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "#fff",
     borderRadius: 12,
     overflow: "hidden",
     shadowColor: "#000",
@@ -92,6 +119,8 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 2 },
     elevation: 3,
+    // Glass morph effect: semi-transparent background with a subtle border
+    borderWidth: 1,
   },
   imageContainer: {
     position: "relative",
@@ -135,28 +164,24 @@ const styles = StyleSheet.create({
   price: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#4CAF50",
   },
   negotiableBadge: {
-    backgroundColor: '#E3F2FD',
+    backgroundColor: "rgba(227, 242, 253, 0.85)",
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
   },
   negotiableText: {
     fontSize: 10,
-    color: '#2196F3',
-    fontWeight: '500',
+    fontWeight: "500",
   },
   title: {
     fontSize: 16,
     fontWeight: "600",
     marginBottom: 4,
-    color: "#333",
   },
   description: {
     fontSize: 14,
-    color: "#666",
     lineHeight: 20,
   },
 });

@@ -28,7 +28,7 @@ interface UploadProps {
 
 /**
  * Upload Component
- * - Allows users to upload a new item with image, title, description, etc.
+ * - Allows users to upload a new item with up to three images, title, description, etc.
  * - Uses a styling theme inspired by the Knowledge page.
  * - Calls the onClose callback when the user taps the back arrow or after a successful listing.
  */
@@ -42,7 +42,12 @@ const Upload: React.FC<UploadProps> = ({ onClose, initialMethod = "sell" }) => {
   const [price, setPrice] = useState("");
   const [negotiable, setNegotiable] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [imageUrl, setImageUrl] = useState("https://via.placeholder.com/150");
+  // Changed to array for multiple images (up to 3)
+  const [images, setImages] = useState<string[]>([
+    "https://via.placeholder.com/150",
+    "",
+    ""
+  ]);
   const [uploadMethod, setUploadMethod] = useState<"sell" | "swap" | "donate">(initialMethod);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
 
@@ -62,22 +67,39 @@ const Upload: React.FC<UploadProps> = ({ onClose, initialMethod = "sell" }) => {
       Alert.alert("Invalid Price", "Please enter a valid price for your item");
       return false;
     }
+    // Make sure at least one image is uploaded
+    if (!images[0] || images[0] === "https://via.placeholder.com/150") {
+      Alert.alert("Missing Information", "Please upload at least one image");
+      return false;
+    }
     return true;
   };
 
   /**
-   * Launches the image picker and updates the image URL state.
+   * Launches the image picker and updates the images array at the specified index.
    */
-  const selectImage = async () => {
+  const selectImage = async (index: number) => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
     });
+    
     if (!result.canceled && result.assets && result.assets.length > 0) {
-      setImageUrl(result.assets[0].uri);
+      const newImages = [...images];
+      newImages[index] = result.assets[0].uri;
+      setImages(newImages);
     }
+  };
+
+  /**
+   * Removes an image at the specified index.
+   */
+  const removeImage = (index: number) => {
+    const newImages = [...images];
+    newImages[index] = "";
+    setImages(newImages);
   };
 
   /**
@@ -95,8 +117,14 @@ const Upload: React.FC<UploadProps> = ({ onClose, initialMethod = "sell" }) => {
       } else if (uploadMethod === "swap") {
         formattedPrice = "For Swap";
       }
+      
+      // Filter out empty image slots
+      const validImages = images.filter(img => img && img !== "https://via.placeholder.com/150");
+      
       const newItem = {
-        image: imageUrl,
+        // Use first image as main image, but store all images
+        image: validImages[0] || "https://via.placeholder.com/150",
+        images: validImages, // Save all uploaded images
         price: formattedPrice,
         title: title.trim(),
         description: description.trim(),
@@ -164,6 +192,41 @@ const Upload: React.FC<UploadProps> = ({ onClose, initialMethod = "sell" }) => {
       </Text>
     </TouchableOpacity>
   );
+
+  /**
+   * Renders an image picker item based on the current state.
+   */
+  const renderImagePicker = (index: number) => {
+    const imageUrl = images[index];
+    const hasImage = imageUrl && imageUrl !== "https://via.placeholder.com/150";
+    
+    return (
+      <View style={styles.imagePickerContainer} key={`image-${index}`}>
+        <TouchableOpacity
+          style={styles.imagePickerPlaceholder}
+          onPress={() => selectImage(index)}
+        >
+          {hasImage ? (
+            <Image source={{ uri: imageUrl }} style={styles.imagePreview} />
+          ) : (
+            <View style={styles.emptyImagePlaceholder}>
+              <Ionicons name="camera" size={24} color="#999" />
+              <Text style={styles.emptyImageText}>Image {index + 1}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+        
+        {hasImage && (
+          <TouchableOpacity
+            style={styles.removeImageButton}
+            onPress={() => removeImage(index)}
+          >
+            <Ionicons name="close-circle" size={24} color="#FF3B30" />
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+  };
 
   // Categories data
   const categories = [
@@ -255,16 +318,10 @@ const Upload: React.FC<UploadProps> = ({ onClose, initialMethod = "sell" }) => {
           {renderMethodButton({ method: "donate", label: "Donate", color: "#FF9800" })}
         </View>
 
-        {/* Image Upload Section */}
-        <Text style={styles.sectionTitle}>Upload Images</Text>
-        <View style={styles.imageContainer}>
-          <TouchableOpacity style={styles.mainImagePlaceholder} onPress={selectImage}>
-            <Image source={{ uri: imageUrl }} style={styles.mainImagePreview} />
-            <View style={styles.imageOverlay}>
-              <Ionicons name="camera" size={32} color="#fff" />
-              <Text style={styles.imageOverlayText}>Tap to add</Text>
-            </View>
-          </TouchableOpacity>
+        {/* Multiple Image Upload Section */}
+        <Text style={styles.sectionTitle}>Upload Images (Up to 3)</Text>
+        <View style={styles.imageGalleryContainer}>
+          {[0, 1, 2].map(index => renderImagePicker(index))}
         </View>
 
         {/* Item Details Section */}
@@ -325,7 +382,7 @@ const Upload: React.FC<UploadProps> = ({ onClose, initialMethod = "sell" }) => {
         <Text style={styles.sectionTitle}>Preview</Text>
         <View style={styles.previewContainer}>
           <FeaturedCard
-            image={imageUrl}
+            image={images[0] || "https://via.placeholder.com/150"}
             price={
               uploadMethod === "sell"
                 ? `₹${price || "0"}`
@@ -418,37 +475,50 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
     color: "#111827",
   },
-  imageContainer: {
-    padding: 16,
-    backgroundColor: "#fff",
+  imageGalleryContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    marginBottom: 16,
   },
-  mainImagePlaceholder: {
-    width: "100%",
-    height: 200,
-    backgroundColor: "#E5E7EB",
+  imagePickerContainer: {
+    width: "30%", // Adjusted width for better spacing
+    aspectRatio: 1, // Ensures square containers
     borderRadius: 8,
-    marginBottom: 8,
     overflow: "hidden",
+    backgroundColor: "#E5E7EB",
+    justifyContent: "center",
+    alignItems: "center",
     position: "relative",
   },
-  mainImagePreview: {
+  imagePickerPlaceholder: {
     width: "100%",
     height: "100%",
-  },
-  imageOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0,0,0,0.3)",
     justifyContent: "center",
     alignItems: "center",
   },
-  imageOverlayText: {
-    color: "#fff",
-    marginTop: 8,
-    fontWeight: "500",
+  imagePreview: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover", // Ensures the image fits well
+  },
+  emptyImagePlaceholder: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  emptyImageText: {
+    color: "#999",
+    fontSize: 12,
+    marginTop: 4,
+  },
+  removeImageButton: {
+    position: "absolute",
+    top: 4,
+    right: 4,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 2,
+    elevation: 2,
   },
   card: {
     backgroundColor: "#fff",
